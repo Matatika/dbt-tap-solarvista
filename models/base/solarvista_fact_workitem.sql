@@ -10,9 +10,9 @@ renamed as (
         -- dimensions
         created_on::timestamp as report_date,
 
-        EXTRACT(YEAR FROM created_on)::text as report_year,
-        EXTRACT(MONTH FROM created_on)::text as report_month,
-        EXTRACT(DAY FROM created_on)::text as report_day,
+        EXTRACT(YEAR FROM created_on)::integer as report_year,
+        EXTRACT(MONTH FROM created_on)::integer as report_month,
+        EXTRACT(DAY FROM created_on)::integer as report_day,
 
         properties_site_id as site_id,
         properties_customer_id as customer_id,
@@ -21,12 +21,15 @@ renamed as (
         properties_equipment_id as equipment_id,
         assigned_user_id as assigned_user_id,
         work_item_template_id as template_id,
-
+	current_workflow_stage_type as stage,
+	
         -- keys
         work_item_id as id,
         reference as reference,
 
         -- metrics
+        1 as count,
+        is_complete as is_complete,
         properties_duration_hours as duration_hours,
         properties_charge as charge,
         properties_price_inc_tax as price_inc_tax
