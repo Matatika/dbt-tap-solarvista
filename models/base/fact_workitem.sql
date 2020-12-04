@@ -3,12 +3,7 @@
 with workitems as (
     select * from "{{var('schema')}}".workitem_stream
 ),
-customers as (
-    select * from {{ ref('dim_customer') }}
-),
-users as (
-    select * from {{ ref('dim_user') }}
-),
+
 fact_workitem as (
     select distinct 
         workitems.work_item_id,
@@ -16,7 +11,7 @@ fact_workitem as (
         -- dimensions
         workitems.created_on,
         workitems.last_modified,
-        created_on::timestamp as report_date,
+        created_on::date as report_date,
         EXTRACT(YEAR FROM created_on)::integer as report_year,
         EXTRACT(MONTH FROM created_on)::integer as report_month,
         EXTRACT(DAY FROM created_on)::integer as report_day,
@@ -39,7 +34,7 @@ fact_workitem as (
         workitems.reference as reference,
 
         -- metrics
-        1 as job_count,
+        1 as workitem_count,
         properties_duration_hours as duration_hours,
         properties_charge as charge,
         properties_price_inc_tax as price_inc_tax,
