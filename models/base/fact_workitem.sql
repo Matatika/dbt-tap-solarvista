@@ -15,6 +15,8 @@ fact_workitem as (
         EXTRACT(YEAR FROM created_on)::integer as report_year,
         EXTRACT(MONTH FROM created_on)::integer as report_month,
         EXTRACT(DAY FROM created_on)::integer as report_day,
+        workitems.properties_project_id as project_id,
+        workitems.properties_territories_id as territory_id,
         workitems.properties_site_id as site_id,
         workitems.properties_customer_id as customer_id,
         workitems.properties_currency_id as currency_id,
