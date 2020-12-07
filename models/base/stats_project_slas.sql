@@ -47,7 +47,7 @@ stats as (
 	
 ),
 
-monthly_project_sla_stats as (
+stats_project_slas as (
     select
         report_year,
         report_month,
@@ -63,4 +63,4 @@ monthly_project_sla_stats as (
         left join projects on projects.reference = stats.reference
         left outer join dates on dates.date_day = stats.report_date
 )
-select * from monthly_project_sla_stats
+select * from stats_project_slas

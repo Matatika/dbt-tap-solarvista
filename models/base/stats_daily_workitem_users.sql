@@ -25,7 +25,7 @@ dates as (
     select * from {{ ref('dim_date') }}
 ),
 
-daily_workitem_user_stats as (
+stats_daily_user_workitems as (
     select
         report_year,
         report_month,
@@ -48,4 +48,4 @@ daily_workitem_user_stats as (
     left join users on users.user_id = stats.assigned_user_id
     left outer join dates on dates.date_day = stats.report_date
 )
-select * from daily_workitem_user_stats
+select * from stats_daily_user_workitems

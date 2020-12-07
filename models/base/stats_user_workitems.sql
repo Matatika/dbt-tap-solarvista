@@ -15,7 +15,7 @@ users as (
     select * from {{ ref('dim_user') }}
 ),
 
-user_workitems as (
+stats_user_workitems as (
     select
         users.user_id,
         users.display_name,
@@ -26,4 +26,4 @@ user_workitems as (
     from users
     left join workitem_facts on users.user_id = workitem_facts.assigned_user_id
 )
-select * from user_workitems
+select * from stats_user_workitems
