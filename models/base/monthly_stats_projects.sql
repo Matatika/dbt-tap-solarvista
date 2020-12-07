@@ -1,0 +1,36 @@
+{{ config(materialized='table') }}
+
+with stats as (
+    select
+        EXTRACT(YEAR FROM createdon)::integer as report_year,
+        EXTRACT(MONTH FROM createdon)::integer as report_month,
+        date_trunc('month', MIN(createdon))::date as month_start,
+
+        -- aggregations
+	    sum(1) as total_projects,
+        sum(number_workitems) as total_workitems,
+        round(avg(first_response_hours)::numeric, 1) as avg_first_response_hours,
+        sum(response_within_sla) as total_response_within_sla
+    from {{ ref('stats_projects') }}
+	where appliedresponsesla is not null
+    group by report_year, report_month
+    order by report_year ASC, report_month ASC
+),
+
+dates as (
+    select * from {{ ref('dim_date') }}
+),
+
+monthly_projects_stats as (
+    select
+        report_year, 
+        report_month,
+    
+        total_projects,
+        total_workitems,
+        avg_first_response_hours,
+        total_response_within_sla
+    from stats
+        left outer join dates on dates.date_day = stats.month_start
+)
+select * from monthly_projects_stats
