@@ -2,13 +2,13 @@
 
 with stats as (
     select
-        EXTRACT(YEAR FROM createdon)::integer as report_year,
-        EXTRACT(MONTH FROM createdon)::integer as report_month,
+        report_year,
+        report_month,
         date_trunc('month', MIN(createdon))::date as month_start,
 
         -- aggregations
-	    sum(1) as total_projects,
-        sum(number_workitems) as total_workitems,
+	    sum(total_projects) as total_projects,
+        sum(total_workitems) as total_workitems,
         round(avg(first_response_hours)::numeric, 1) as avg_first_response_hours,
         sum(response_within_sla) as total_response_within_sla,
         round(avg(final_fix_hours)::numeric, 1) as avg_final_fix_hours,
