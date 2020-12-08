@@ -35,7 +35,7 @@ daily_projects_stats as (
         total_projects,
         total_workitems,
         avg_first_response_hours,
-        total_response_within_sla
+        total_response_within_sla,
         avg_final_fix_hours,
         total_final_fix_within_sla
     from stats
