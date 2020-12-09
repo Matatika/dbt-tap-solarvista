@@ -9,9 +9,16 @@ fact_workitem_history as (
         -- key transforms
         workitemhistory.work_item_history_id as id,
 
+	    -- dimensions
+        workitemhistory.stage_stage_type as stage,
+        workitemhistory.stage_transition_received_at as received_at,
+        workitemhistory.stage_transition_received_at::date as report_date,
+        EXTRACT(YEAR FROM stage_transition_received_at)::integer as report_year,
+        EXTRACT(MONTH FROM stage_transition_received_at)::integer as report_month,
+        EXTRACT(DAY FROM stage_transition_received_at)::integer as report_day,
+
         -- dimension transforms
         {{ dbt_utils.surrogate_key(['stage_assigned_user_user_id']) }} as users_sk,
-        stage_stage_type as stage,
     
         -- metrics
 
