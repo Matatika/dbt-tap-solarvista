@@ -14,7 +14,7 @@ projects as (
 
 project_stats as (
     select distinct
-        project_id,
+        projects.reference as project_id,
         min(projects.createdon) as createdon,
         min(projects.appliedresponsesla) as appliedresponsesla,
         min(projects.responseduedate) as responseduedate,
@@ -28,10 +28,10 @@ project_stats as (
         max(workitem_stages.closed) as final_fix,
         {{ dbt_utils.datediff('min(projects.createdon)', 'max(workitem_stages.closed)', 'hour') }} as final_fix_hours
 
-    from workitem_facts, workitem_stages, projects
-    where workitem_stages.work_item_id = workitem_facts.work_item_id
-    and projects.reference = workitem_facts.project_id
-    group by project_id
+    from projects
+	left join workitem_facts on workitem_facts.project_id = projects.reference
+	left join workitem_stages on workitem_stages.work_item_id = workitem_facts.work_item_id
+    group by projects.reference
 ),
 
 stats as (
