@@ -14,7 +14,6 @@ with stats as (
         round(avg(final_fix_hours)::numeric, 1) as avg_final_fix_hours,
         sum(final_fix_within_sla) as total_final_fix_within_sla
     from {{ ref('stats_projects') }}
-	where appliedresponsesla is not null
     group by report_year, report_month
     order by report_year ASC, report_month ASC
 ),
