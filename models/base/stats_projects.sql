@@ -15,14 +15,30 @@ projects as (
 project_stats as (
     select distinct
         projects.reference as project_id,
+	    min(projects.project_type) as type,
+	    min(projects.status) as status,
         min(projects.createdon) as createdon,
         min(projects.appliedresponsesla) as appliedresponsesla,
-        min(projects.responseduedate) as responseduedate,
-        min(projects.fixduedate) as fixduedate,
+        min(projects.responseduedate) as responsedue_date,
+        min(projects.fixduedate) as fixdue_date,
 
         -- aggregations
-        count(workitem_facts.work_item_id) as number_workitems,
-        min(workitem_stages.cancelled) as cancelled,
+        sum(workitem_count) as number_workitems,
+	    (case 
+		     when min(projects.status) = 'Cancelled' then 0 
+		     when min(projects.status) = 'Closed' then 0 
+		     when min(workitem_stages.closed) is null then 1 
+		 end) as is_open,
+        min(workitem_stages.closed) as closed_date,
+        (case 
+		     when min(projects.status) = 'Closed' then 1 
+		     when min(workitem_stages.closed) is not null then 1 
+		 end) as is_closed,
+        min(workitem_stages.cancelled) as cancelled_date,
+	    (case 
+		     when min(projects.status) = 'Cancelled' then 1 
+		     when min(workitem_stages.cancelled) is null then 1 
+		 end) as is_cancelled,
         min(workitem_stages.assigned) as first_response,
         {{ dbt_utils.datediff('min(projects.createdon)', 'min(workitem_stages.assigned)', 'hour') }} as first_response_hours,
         max(workitem_stages.closed) as final_fix,
@@ -42,11 +58,14 @@ stats as (
         EXTRACT(MONTH FROM createdon)::integer as report_month,
         EXTRACT(DAY FROM createdon)::integer as report_day,
 
+	    min(type) as type,
+	    min(status) as status,
         min(createdon) as createdon,
         min(appliedresponsesla) as appliedresponsesla,
-        min(responseduedate) as responseduedate,
-        min(fixduedate) as fixduedate,
-		min(cancelled) as cancelled,
+        min(responsedue_date) as responsedue_date,
+        min(fixdue_date) as fixdue_date,
+		min(cancelled_date) as cancelled_date,
+		min(closed_date) as closed_date,
 		min(first_response) as first_response,
 		min(first_response_hours) as first_response_hours,
 		min(final_fix) as final_fix,
@@ -55,8 +74,10 @@ stats as (
 		-- aggregations
         count(project_id) as total_projects,
 		sum(number_workitems) as total_workitems,
-		(case when min(cancelled) is not null then 1 when {{ dbt_utils.datediff('min(responseduedate)', 'min(first_response)', 'hour') }} <= 0 then 1 else 0 end) as response_within_sla,
-		(case when min(cancelled) is not null then 1 when {{ dbt_utils.datediff('min(fixduedate)', 'min(final_fix)', 'hour') }} <= 0 then 1 else 0 end) as final_fix_within_sla
+		sum(is_open) as total_open,
+		sum(is_closed) as total_closed,
+		(case when min(cancelled_date) is not null then 1 when {{ dbt_utils.datediff('min(responsedue_date)', 'min(first_response)', 'hour') }} <= 0 then 1 else 0 end) as response_within_sla,
+		(case when min(cancelled_date) is not null then 1 when {{ dbt_utils.datediff('min(fixdue_date)', 'min(final_fix)', 'hour') }} <= 0 then 1 else 0 end) as final_fix_within_sla
 
     from project_stats
     group by project_id, report_date, report_year, report_month, report_day

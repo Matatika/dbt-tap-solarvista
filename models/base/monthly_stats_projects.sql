@@ -27,6 +27,7 @@ monthly_projects_stats as (
     select
         report_year, 
         report_month,
+        month_start,
     
         total_projects,
         total_workitems,

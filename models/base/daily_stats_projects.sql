@@ -26,9 +26,12 @@ dates as (
 
 daily_projects_stats as (
     select
+        report_date,
         report_year,
         report_month,
         report_day,
+        dates.day_of_month,
+        dates.day_of_year,
         dates.day_of_week,
         dates.day_of_week_name,
     
