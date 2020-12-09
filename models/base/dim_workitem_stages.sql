@@ -2,7 +2,7 @@
 
 with dim_workitem_stages as (
     SELECT *
-    FROM crosstab('select distinct work_item_id, stage, max(last_received_at)
+    FROM crosstab('select distinct work_item_id, stage, max(first_received_at)
                     from {{ ref("stg_workitem_stages") }}
                     group by work_item_id, stage
                     order by work_item_id',
