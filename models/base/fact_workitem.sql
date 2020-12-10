@@ -9,6 +9,12 @@ customers as (
 users as (
     select * from {{ ref('dim_user') }}
 ),
+projects as (
+    select * from {{ ref('dim_project') }}
+),
+territories as (
+    select * from {{ ref('dim_territory') }}
+),
 fact_workitem as (
     select distinct
     
@@ -24,24 +30,33 @@ fact_workitem as (
         EXTRACT(YEAR FROM created_on)::integer as report_year,
         EXTRACT(MONTH FROM created_on)::integer as report_month,
         EXTRACT(DAY FROM created_on)::integer as report_day,
-        workitems.properties_project_id as project_id,
-        workitems.properties_territories_id as territory_id,
-        workitems.properties_site_id as site_id,
-        workitems.properties_customer_id as customer_id,
+
+        --fact table will only contain SCD surrogate keys
+        --below keys needs to be removed from fact and retrieved in reporting views later     
+        projects.reference as project_id,
+        users.user_id as assigned_user_id,
+        territories.reference as territory_id,
+        customers.reference as customer_id,
+
+        workitems.properties_site_id as site_id,    
         workitems.properties_currency_id as currency_id,
+        workitems.properties_equipment_id as equipment_id,    
         workitems.properties_problem_id as problem_id,
-        workitems.properties_equipment_id as equipment_id,
-        workitems.assigned_user_id as assigned_user_id,
         workitems.work_item_template_id as template_id,
+
+        --all other attributes from workitem stage table
         workitems.current_workflow_stage_type as current_stage,
         workitems.is_complete,
         workitems.properties_operationalstatus as operationalstatus,
         workitems.properties_model as model,	
         workitems.properties_fixduedate as fixduedate,	
-        workitems.properties_responseduedate as responseduedate,	
-    
-        -- surrogate keys for slowly changing dimensions 
+        workitems.properties_responseduedate as responseduedate,	    
+        
+        --SCD surrogate keys for join purposes in reporting layer
         users.users_sk, 
+        projects.project_sk,
+        territories.territory_sk,
+        customers.customer_sk,
 
         -- metrics
         1 as workitem_count,
@@ -49,7 +64,10 @@ fact_workitem as (
         properties_charge as charge,
         properties_price_inc_tax as price_inc_tax
 
-    from workitems, users
+    from workitems, users, projects, territories, customers
     where users.user_id = workitems.assigned_user_id
+    and projects.reference = workitems.properties_project_id
+    and territories.reference = workitems.properties_territories_id
+    and customers.reference = workitems.properties_customer_id
 )
 select * from fact_workitem

@@ -11,6 +11,7 @@ users as (
 ),
 fact_workitem_hist as (
     select distinct 
+    --all stage transition columns from workitem history stage table
     workitems_hist.stage_assigned_user_display_name,
     workitems_hist.stage_assigned_user_user_id,
     workitems_hist.stage_stage_display_name,
