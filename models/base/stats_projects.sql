@@ -98,8 +98,16 @@ stats as (
 		sum(number_workitems) as total_workitems,
 		sum(is_open) as total_open,
 		sum(is_closed) as total_closed,
-		(case when min(cancelled_timestamp) is not null then 1 when {{ dbt_utils.datediff('min(responsedue_date)', 'min(first_response)', 'hour') }} <= 0 then 1 else 0 end) as response_within_sla,
-		(case when min(cancelled_timestamp) is not null then 1 when {{ dbt_utils.datediff('min(fixdue_date)', 'min(final_fix)', 'hour') }} <= 0 then 1 else 0 end) as final_fix_within_sla
+		(case 
+            when min(is_closed) is not null then 1 
+            when min(is_cancelled) is not null then 1 
+            when {{ dbt_utils.datediff('min(responsedue_date)', 'min(first_response)', 'hour') }} <= 0 then 1 else 0 
+         end) as response_within_sla,
+		(case 
+            when min(is_closed) is not null then 1 
+            when min(is_cancelled) is not null then 1 
+            when {{ dbt_utils.datediff('min(fixdue_date)', 'min(final_fix)', 'hour') }} <= 0 then 1 else 0 
+         end) as final_fix_within_sla
 
     from project_stats
     group by project_id, report_date, report_year, report_month, report_day
