@@ -49,6 +49,7 @@ project_stats as (
 	    (case 
 		     when min(projects.status) = 'Cancelled' then 1 
 		     when min(workitem_stages.cancelled_timestamp) is not null then 1 
+		     when min(workitem_stages.remoteclosed_timestamp) is not null then 1 
 		 end) as is_cancelled,
         min(workitem_stages.preworking_timestamp) as first_response,
         {{ dbt_utils.datediff('min(projects.createdon)', 'min(workitem_stages.accepted_timestamp)', 'hour') }} as first_response_hours,
