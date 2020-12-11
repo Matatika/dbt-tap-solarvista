@@ -1,5 +1,5 @@
 
-with workitems_hist as (
+with workitems_history as (
     select * from {{ ref('fact_workitem_history') }}
 ),
 workitems as (
@@ -9,12 +9,12 @@ projects as (
      select distinct * from {{ ref('dim_project') }}
 ),
 workitems_accepted as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'Accepted'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'Accepted'
 ),
 workitems_closed as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'Closed'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'Closed'
 ),
 vw_workitem_sla as (
     select distinct 
@@ -23,17 +23,17 @@ vw_workitem_sla as (
     projects.createdon,    
     projects.responseduedate,
     projects.fixduedate,
-    workitems_accepted.received_at as accepted,    
-    workitems_closed.received_at as closed,    
+    workitems_accepted.stage_transition_received_at as accepted,    
+    workitems_closed.stage_transition_received_at as closed,    
     --To compute SLA response time comparing project responseduedate with workitem accepted date
-    DATE_PART('day',projects.responseduedate::timestamp - workitems_accepted.received_at::timestamp) * 24 +
-    DATE_PART('hour',projects.responseduedate::timestamp - workitems_accepted.received_at::timestamp) as responsetime,  
+    DATE_PART('day',projects.responseduedate::timestamp - workitems_accepted.stage_transition_received_at::timestamp) * 24 +
+    DATE_PART('hour',projects.responseduedate::timestamp - workitems_accepted.stage_transition_received_at::timestamp) as responsetime,  
     --To compute SLA fix time comparing project fixduedate with workitem closed transition date
-    DATE_PART('day',workitems_closed.received_at::timestamp - projects.fixduedate::timestamp) * 24 +
-    DATE_PART('hour',workitems_closed.received_at::timestamp - projects.fixduedate::timestamp) as fixtime,           
+    DATE_PART('day',workitems_closed.stage_transition_received_at::timestamp - projects.fixduedate::timestamp) * 24 +
+    DATE_PART('hour',workitems_closed.stage_transition_received_at::timestamp - projects.fixduedate::timestamp) as fixtime,           
     --To compute actual SLA response time comparing project created on with workitem closed transition date
-    DATE_PART('day',workitems_closed.received_at::timestamp - projects.createdon::timestamp) * 24 +
-    DATE_PART('hour',workitems_closed.received_at::timestamp - projects.createdon::timestamp) as actualresponse           
+    DATE_PART('day',workitems_closed.stage_transition_received_at::timestamp - projects.createdon::timestamp) * 24 +
+    DATE_PART('hour',workitems_closed.stage_transition_received_at::timestamp - projects.createdon::timestamp) as actualresponse           
 from projects,workitems,workitems_accepted, workitems_closed
 where projects.project_sk = workitems.project_sk
 and workitems.work_item_id = workitems_accepted.work_item_id 

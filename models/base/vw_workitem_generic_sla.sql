@@ -1,6 +1,6 @@
 
-with workitems_hist as (
-    select * from {{ ref('fact_workitem_hist') }}
+with workitems_history as (
+    select * from {{ ref('fact_workitem_history') }}
 ),
 workitems as (
     select * from {{ ref('fact_workitem') }}
@@ -9,56 +9,56 @@ projects as (
      select distinct * from {{ ref('dim_project') }}
 ),
 workitems_accepted as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'Accepted'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'Accepted'
 ),
 workitems_closed as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'Closed'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'Closed'
 ),
 workitems_assigned as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'Assigned'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'Assigned'
 ),
 workitems_cancelled as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'Cancelled'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'Cancelled'
 ),
 workitems_discarded as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'Discarded'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'Discarded'
 ),
 workitems_postworking as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'PostWorking'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'PostWorking'
 ),
 workitems_preworking as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'PreWorking'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'PreWorking'
 ),
 workitems_quickclose as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'QuickClose'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'QuickClose'
 ),
 workitems_remoteclosed as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'RemoteClosed'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'RemoteClosed'
 ),
 workitems_travellingfrom as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'TravellingFrom'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'TravellingFrom'
 ),
 workitems_travellingto as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'TravellingTo'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'TravellingTo'
 ),
 workitems_unassigned as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'Unassigned'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'Unassigned'
 ),
 workitems_working as (
-select distinct * from workitems_hist 
-where workitems_hist.stage_stage_type = 'Working'
+select distinct * from workitems_history 
+where workitems_history.stage_stage_type = 'Working'
 ),
 vw_workitem_generic_sla as (
     select distinct 

@@ -13,3 +13,6 @@ ENV/
 env.bak/
 venv.bak/
 .env.dev
+
+# Eclipse
+.project

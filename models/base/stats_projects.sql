@@ -5,7 +5,7 @@ with workitem_facts as (
 ),
 
 workitem_stages as (
-     select * from {{ ref('dim_workitem_stages') }}
+     select * from {{ ref('vw_workitem_stages') }}
 ),
 
 projects as (
@@ -24,25 +24,36 @@ project_stats as (
 
         -- aggregations
         sum(workitem_count) as number_workitems,
+        min(workitem_stages.accepted_timestamp) as accepted_timestamp,
+        min(workitem_stages.closed_timestamp) as closed_timestamp,  
+        min(workitem_stages.assigned_timestamp) as assigned_timestamp,  
+        min(workitem_stages.cancelled_timestamp) as cancelled_timestamp,  
+        min(workitem_stages.discarded_timestamp) as discarded_timestamp,  
+        min(workitem_stages.postworking_timestamp) as postworking_timestamp,  
+        min(workitem_stages.preworking_timestamp) as preworking_timestamp,  
+        min(workitem_stages.quickclose_timestamp) as quickclose_timestamp,  
+        min(workitem_stages.remoteclosed_timestamp) as remoteclosed_timestamp,  
+        min(workitem_stages.travellingfrom_timestamp) as travellingfrom_timestamp,  
+        min(workitem_stages.travellingto_timestamp) as travellingto_timestamp,  
+        min(workitem_stages.unassigned_timestamp) as unassigned_timestamp,  
+        min(workitem_stages.working_timestamp) as working_timestamp,
 	    (case 
 		     when min(projects.status) = 'Cancelled' then 0 
 		     when min(projects.status) = 'Closed' then 0 
-		     when min(workitem_stages.closed) is null then 1 
+		     when min(workitem_stages.closed_timestamp) is null then 1 
 		 end) as is_open,
-        min(workitem_stages.closed) as closed_date,
         (case 
 		     when min(projects.status) = 'Closed' then 1 
-		     when min(workitem_stages.closed) is not null then 1 
+		     when min(workitem_stages.closed_timestamp) is not null then 1 
 		 end) as is_closed,
-        min(workitem_stages.cancelled) as cancelled_date,
 	    (case 
 		     when min(projects.status) = 'Cancelled' then 1 
-		     when min(workitem_stages.cancelled) is null then 1 
+		     when min(workitem_stages.cancelled_timestamp) is null then 1 
 		 end) as is_cancelled,
-        min(workitem_stages.assigned) as first_response,
-        {{ dbt_utils.datediff('min(projects.createdon)', 'min(workitem_stages.assigned)', 'hour') }} as first_response_hours,
-        max(workitem_stages.closed) as final_fix,
-        {{ dbt_utils.datediff('min(projects.createdon)', 'max(workitem_stages.closed)', 'hour') }} as final_fix_hours
+        min(workitem_stages.preworking_timestamp) as first_response,
+        {{ dbt_utils.datediff('min(projects.createdon)', 'min(workitem_stages.preworking_timestamp)', 'hour') }} as first_response_hours,
+        max(workitem_stages.closed_timestamp) as final_fix,
+        {{ dbt_utils.datediff('min(projects.createdon)', 'max(workitem_stages.closed_timestamp)', 'hour') }} as final_fix_hours
 
     from projects
 	left join workitem_facts on workitem_facts.project_id = projects.reference
@@ -64,8 +75,19 @@ stats as (
         min(appliedresponsesla) as appliedresponsesla,
         min(responsedue_date) as responsedue_date,
         min(fixdue_date) as fixdue_date,
-		min(cancelled_date) as cancelled_date,
-		min(closed_date) as closed_date,
+        min(accepted_timestamp) as accepted_timestamp,
+        min(closed_timestamp) as closed_timestamp,  
+        min(assigned_timestamp) as assigned_timestamp,  
+        min(cancelled_timestamp) as cancelled_timestamp,  
+        min(discarded_timestamp) as discarded_timestamp,  
+        min(postworking_timestamp) as postworking_timestamp,  
+        min(preworking_timestamp) as preworking_timestamp,  
+        min(quickclose_timestamp) as quickclose_timestamp,  
+        min(remoteclosed_timestamp) as remoteclosed_timestamp,  
+        min(travellingfrom_timestamp) as travellingfrom_timestamp,  
+        min(travellingto_timestamp) as travellingto_timestamp,  
+        min(unassigned_timestamp) as unassigned_timestamp,  
+        min(working_timestamp) as working_timestamp,
 		min(first_response) as first_response,
 		min(first_response_hours) as first_response_hours,
 		min(final_fix) as final_fix,
@@ -76,8 +98,8 @@ stats as (
 		sum(number_workitems) as total_workitems,
 		sum(is_open) as total_open,
 		sum(is_closed) as total_closed,
-		(case when min(cancelled_date) is not null then 1 when {{ dbt_utils.datediff('min(responsedue_date)', 'min(first_response)', 'hour') }} <= 0 then 1 else 0 end) as response_within_sla,
-		(case when min(cancelled_date) is not null then 1 when {{ dbt_utils.datediff('min(fixdue_date)', 'min(final_fix)', 'hour') }} <= 0 then 1 else 0 end) as final_fix_within_sla
+		(case when min(cancelled_timestamp) is not null then 1 when {{ dbt_utils.datediff('min(responsedue_date)', 'min(first_response)', 'hour') }} <= 0 then 1 else 0 end) as response_within_sla,
+		(case when min(cancelled_timestamp) is not null then 1 when {{ dbt_utils.datediff('min(fixdue_date)', 'min(final_fix)', 'hour') }} <= 0 then 1 else 0 end) as final_fix_within_sla
 
     from project_stats
     group by project_id, report_date, report_year, report_month, report_day
