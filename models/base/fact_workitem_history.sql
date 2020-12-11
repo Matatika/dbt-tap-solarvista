@@ -35,7 +35,7 @@ fact_workitem_history as (
         workitemhistory.workflow_id,
         workitemhistory.stage_assigned_user_email
 
-    from workitemhistory, users
-    where users.user_id = workitemhistory.stage_assigned_user_user_id
+    from workitemhistory
+	left join users on users.user_id = workitemhistory.stage_assigned_user_user_id
 )
 select * from fact_workitem_history
