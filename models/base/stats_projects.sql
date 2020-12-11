@@ -48,10 +48,10 @@ project_stats as (
 		 end) as is_closed,
 	    (case 
 		     when min(projects.status) = 'Cancelled' then 1 
-		     when min(workitem_stages.cancelled_timestamp) is null then 1 
+		     when min(workitem_stages.cancelled_timestamp) is not null then 1 
 		 end) as is_cancelled,
         min(workitem_stages.preworking_timestamp) as first_response,
-        {{ dbt_utils.datediff('min(projects.createdon)', 'min(workitem_stages.preworking_timestamp)', 'hour') }} as first_response_hours,
+        {{ dbt_utils.datediff('min(projects.createdon)', 'min(workitem_stages.accepted_timestamp)', 'hour') }} as first_response_hours,
         max(workitem_stages.closed_timestamp) as final_fix,
         {{ dbt_utils.datediff('min(projects.createdon)', 'max(workitem_stages.closed_timestamp)', 'hour') }} as final_fix_hours
 
@@ -98,14 +98,13 @@ stats as (
 		sum(number_workitems) as total_workitems,
 		sum(is_open) as total_open,
 		sum(is_closed) as total_closed,
+		sum(is_cancelled) as total_cancelled,
 		(case 
-            when min(is_closed) is not null then 1 
-            when min(is_cancelled) is not null then 1 
+            when min(is_cancelled) = 1 then 1 
             when {{ dbt_utils.datediff('min(responsedue_date)', 'min(first_response)', 'hour') }} <= 0 then 1 else 0 
          end) as response_within_sla,
 		(case 
-            when min(is_closed) is not null then 1 
-            when min(is_cancelled) is not null then 1 
+            when min(is_cancelled) = 1 then 1 
             when {{ dbt_utils.datediff('min(fixdue_date)', 'min(final_fix)', 'hour') }} <= 0 then 1 else 0 
          end) as final_fix_within_sla
 

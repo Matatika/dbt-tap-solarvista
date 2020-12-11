@@ -64,10 +64,10 @@ fact_workitem as (
         properties_charge as charge,
         properties_price_inc_tax as price_inc_tax
 
-    from workitems, users, projects, territories, customers
-    where users.user_id = workitems.assigned_user_id
-    and projects.reference = workitems.properties_project_id
-    and territories.reference = workitems.properties_territories_id
-    and customers.reference = workitems.properties_customer_id
+    from workitems
+	left join users on users.user_id = workitems.assigned_user_id
+	left join projects on projects.reference = workitems.properties_project_id
+    left join territories on territories.reference = workitems.properties_territories_id
+    left join customers on customers.reference = workitems.properties_customer_id
 )
 select * from fact_workitem
