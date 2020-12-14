@@ -6,24 +6,28 @@ with stats as (
         report_month,
         date_trunc('month', MIN(createdon))::date as month_start,
 
-        -- aggregations
+        -- basic aggregations
 	    sum(total_projects) as total_projects,
         sum(total_workitems) as total_workitems,
         sum(total_open) as total_open,
         sum(total_closed) as total_closed,
-        round(avg(first_response_hours)::numeric, 1) as avg_first_response_hours,
+
+        -- monthly aggregations
         sum(response_within_sla) as total_response_within_sla,
+        round(avg(first_response_hours)::numeric, 1) as avg_first_response_hours,
         round( (sum(response_within_sla) / NULLIF(sum(total_projects), 0)) * 100, 1) 
             as response_sla_percent,
-        round(avg(first_fix_hours)::numeric, 1) as avg_first_fix_hours,
+        
         sum(first_fix_within_sla) as total_first_fix_within_sla,
+        round(avg(first_fix_hours)::numeric, 1) as avg_first_fix_hours,
         round( (sum(first_fix_within_sla) / NULLIF(sum(total_projects), 0)) * 100, 1) 
             as first_fix_sla_percent,
-        round(avg(final_fix_hours)::numeric, 1) as avg_final_fix_hours,
+        
         sum(final_fix_within_sla) as total_final_fix_within_sla,
+        round(avg(final_fix_hours)::numeric, 1) as avg_final_fix_hours,
         round( (sum(final_fix_within_sla) / NULLIF(sum(total_projects), 0)) * 100, 1) 
             as final_fix_sla_percent
-    from {{ ref('stats_projects') }}
+    from {{ ref('vw_project_sla') }}
     group by report_year, report_month
     order by report_year ASC, report_month ASC
 ),
@@ -42,14 +46,17 @@ monthly_projects_stats as (
         total_workitems,
         total_open,
         total_closed,
-        avg_first_response_hours,
+
         total_response_within_sla,
+        avg_first_response_hours,
         response_sla_percent,
-        avg_first_fix_hours,
+
         total_first_fix_within_sla,
+        avg_first_fix_hours,
         first_fix_sla_percent
-        avg_final_fix_hours,
+
         total_final_fix_within_sla,
+        avg_final_fix_hours,
         final_fix_sla_percent
     from stats
         left outer join dates on dates.date_day = stats.month_start

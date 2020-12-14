@@ -252,6 +252,8 @@ stats as (
 		min(first_response_hours) as first_response_hours,
 		min(first_fix) as first_fix,
 		min(first_fix_hours) as first_fix_hours,
+		min(final_fix) as final_fix,
+		min(final_fix_hours) as final_fix_hours,
 
 		-- aggregations
         count(project_id) as total_projects,
@@ -275,9 +277,8 @@ stats as (
 		(case 
             when min(final_fix) > min(first_fix) then 1 
          end) as is_refix
-
     from vw_project_sla
     group by project_id, report_date, report_year, report_month, report_day
     order by report_year ASC, report_month ASC, report_day ASC
-)				
+)
 select * from stats
