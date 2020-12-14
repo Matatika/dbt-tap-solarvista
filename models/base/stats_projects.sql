@@ -105,6 +105,7 @@ stats as (
 		sum(is_cancelled) as total_cancelled,
 		(case 
             when min(is_cancelled) = 1 then 1 
+            when min(appliedresponsesla) is null then 1 
             when {{ dbt_utils.datediff('min(responsedue_date)', 'min(first_response)', 'hour') }} <= 0 then 1 else 0 
          end) as response_within_sla,
 		(case 
