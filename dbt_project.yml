@@ -1,6 +1,8 @@
 name: 'tap_solarvista'
 version: '0.0.1'
 
+profile: local
+
 source-paths: ["models"]   # paths with source code to compile
 analysis-paths: ["analysis"] # path with analysis files which are compiled, but not run
 target-path: "target"      # path for compiled code
@@ -16,4 +18,4 @@ models:
       materialized: table
 
     vars:
-      schema:               # the schema where the raw Solarvista tables are located
+      schema: cityfm              # the schema where the raw Solarvista tables are located
