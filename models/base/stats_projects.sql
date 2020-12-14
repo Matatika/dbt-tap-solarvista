@@ -38,9 +38,8 @@ project_stats as (
         min(workitem_stages.unassigned_timestamp) as unassigned_timestamp,  
         min(workitem_stages.working_timestamp) as working_timestamp,
 	    (case 
-		     when min(projects.status) = 'Cancelled' then 0 
-		     when min(projects.status) = 'Closed' then 0 
-		     when min(workitem_stages.closed_timestamp) is null then 1 
+		     when min(projects.status) = 'Active' then 1 
+		     when min(workitem_stages.closed_timestamp) is not null then 0 
 		 end) as is_open,
         (case 
 		     when min(projects.status) = 'Closed' then 1 
@@ -51,8 +50,10 @@ project_stats as (
 		     when min(workitem_stages.cancelled_timestamp) is not null then 1 
 		     when min(workitem_stages.remoteclosed_timestamp) is not null then 1 
 		 end) as is_cancelled,
-        min(workitem_stages.preworking_timestamp) as first_response,
+        min(workitem_stages.accepted_timestamp) as first_response,
         {{ dbt_utils.datediff('min(projects.createdon)', 'min(workitem_stages.accepted_timestamp)', 'hour') }} as first_response_hours,
+        min(workitem_stages.closed_timestamp) as first_fix,
+        {{ dbt_utils.datediff('min(projects.createdon)', 'min(workitem_stages.closed_timestamp)', 'hour') }} as first_fix_hours,
         max(workitem_stages.closed_timestamp) as final_fix,
         {{ dbt_utils.datediff('min(projects.createdon)', 'max(workitem_stages.closed_timestamp)', 'hour') }} as final_fix_hours
 
@@ -91,6 +92,8 @@ stats as (
         min(working_timestamp) as working_timestamp,
 		min(first_response) as first_response,
 		min(first_response_hours) as first_response_hours,
+		min(first_fix) as first_fix,
+		min(first_fix_hours) as first_fix_hours,
 		min(final_fix) as final_fix,
 		min(final_fix_hours) as final_fix_hours,
 
@@ -106,8 +109,15 @@ stats as (
          end) as response_within_sla,
 		(case 
             when min(is_cancelled) = 1 then 1 
+            when {{ dbt_utils.datediff('min(fixdue_date)', 'min(first_fix)', 'hour') }} <= 0 then 1 else 0 
+         end) as first_fix_within_sla,
+		(case 
+            when min(is_cancelled) = 1 then 1 
             when {{ dbt_utils.datediff('min(fixdue_date)', 'min(final_fix)', 'hour') }} <= 0 then 1 else 0 
-         end) as final_fix_within_sla
+         end) as final_fix_within_sla,
+		(case 
+            when min(final_fix) > min(first_fix) then 1 
+         end) as is_refix
 
     from project_stats
     group by project_id, report_date, report_year, report_month, report_day

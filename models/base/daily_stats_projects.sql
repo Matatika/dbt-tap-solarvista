@@ -26,8 +26,17 @@ with stats as (
         sum(total_closed) as total_closed,
         round(avg(first_response_hours)::numeric, 1) as avg_first_response_hours,
         sum(response_within_sla) as total_response_within_sla,
+        round( (sum(response_within_sla) / NULLIF(sum(total_projects), 0)) * 100, 1) 
+            as response_sla_percent,
+        round(avg(first_fix_hours)::numeric, 1) as avg_first_fix_hours,
+        sum(first_fix_within_sla) as total_first_fix_within_sla,
+        round( (sum(first_fix_within_sla) / NULLIF(sum(total_projects), 0)) * 100, 1) 
+            as first_fix_sla_percent,
         round(avg(final_fix_hours)::numeric, 1) as avg_final_fix_hours,
-        sum(final_fix_within_sla) as total_final_fix_within_sla
+        sum(final_fix_within_sla) as total_final_fix_within_sla,
+        sum(first_fix_within_sla) as total_first_fix_within_sla,
+        round( (sum(final_fix_within_sla) / NULLIF(sum(total_projects), 0)) * 100, 1) 
+            as final_fix_sla_percent
     from {{ ref('stats_projects') }}
     group by report_date, report_year, report_month, report_day
     order by report_year ASC, report_month ASC, report_day ASC
