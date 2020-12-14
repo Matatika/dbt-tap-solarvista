@@ -38,17 +38,18 @@ project_stats as (
         min(workitem_stages.unassigned_timestamp) as unassigned_timestamp,  
         min(workitem_stages.working_timestamp) as working_timestamp,
 	    (case 
-		     when min(projects.status) = 'Active' then 1 
 		     when min(workitem_stages.closed_timestamp) is not null then 0 
+		     when min(projects.status) = 'Active' then 1 
 		 end) as is_open,
         (case 
-		     when min(projects.status) = 'Closed' then 1 
 		     when min(workitem_stages.closed_timestamp) is not null then 1 
+		     when min(projects.status) = 'Closed' then 1 
 		 end) as is_closed,
 	    (case 
-		     when min(projects.status) = 'Cancelled' then 1 
 		     when min(workitem_stages.cancelled_timestamp) is not null then 1 
 		     when min(workitem_stages.remoteclosed_timestamp) is not null then 1 
+		     when min(workitem_stages.quickclose_timestamp) is not null then 1 
+		     when min(projects.status) = 'Cancelled' then 1 
 		 end) as is_cancelled,
         min(workitem_stages.accepted_timestamp) as first_response,
         {{ dbt_utils.datediff('min(projects.createdon)', 'min(workitem_stages.accepted_timestamp)', 'hour') }} as first_response_hours,
