@@ -53,7 +53,7 @@ monthly_projects_stats as (
 
         total_first_fix_within_sla,
         avg_first_fix_hours,
-        first_fix_sla_percent
+        first_fix_sla_percent,
 
         total_final_fix_within_sla,
         avg_final_fix_hours,
