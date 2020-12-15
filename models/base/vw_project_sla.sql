@@ -8,6 +8,9 @@ workitems as (
 projects as (
      select distinct * from {{ ref('dim_project') }}
 ),
+territories as (
+     select distinct * from {{ ref('dim_territory') }}
+),
 workitems_accepted as (
 --Sql to retrieve the earliest stage transition date
 select ht.work_item_id,ht.stage_transition_received_at
@@ -154,6 +157,7 @@ INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stag
 vw_project_sla as (
     select distinct
         projects.reference as project_id,
+        min(workitems.territory_sk) as territory_sk,
 	    min(projects.project_type) as project_type,
 	    min(projects.status) as status,
         min(projects.createdon) as createdon,
@@ -181,14 +185,16 @@ vw_project_sla as (
         max(workitems_closed.stage_transition_received_at) as final_fix,
 	    (case 
 		     when min(workitems_closed.stage_transition_received_at) is not null then 0 
-		     when min(workitems_remoteclosed.stage_transition_received_at) is not null then 0 
 		     when min(workitems_quickclose.stage_transition_received_at) is not null then 0 
+		     when max(workitems_remoteclosed.stage_transition_received_at) > max(workitems_closed.stage_transition_received_at) then 1 
 		     when min(projects.status) = 'Active' then 1 
 		 end) as is_open,
         (case 
 		     when min(workitems_closed.stage_transition_received_at) is not null then 1 
-		     when min(workitems_remoteclosed.stage_transition_received_at) is not null then 1 
 		     when min(workitems_quickclose.stage_transition_received_at) is not null then 1 
+--		     when min(workitems_remoteclosed.stage_transition_received_at) is not null then 1 
+		     when max(workitems_remoteclosed.stage_transition_received_at) < max(workitems_closed.stage_transition_received_at) then 1 
+		     when min(projects.status) = 'Pending Acceptance' then 1 
 		     when min(projects.status) = 'Closed' then 1 
 		 end) as is_closed,
 	    (case 
@@ -206,7 +212,7 @@ vw_project_sla as (
         DATE_PART('hour',max(workitems_closed.stage_transition_received_at)::timestamp - min(projects.createdon)::timestamp) as final_fix_hours    
     from workitems
     left join projects 
-    on projects.project_sk = workitems.project_sk
+        on projects.project_sk = workitems.project_sk
     left join workitems_accepted using (work_item_id)
     left join workitems_closed using (work_item_id)
     left join workitems_assigned using (work_item_id)
@@ -231,8 +237,8 @@ stats as (
         EXTRACT(MONTH FROM createdon)::integer as report_month,
         EXTRACT(DAY FROM createdon)::integer as report_day,
 
-	    min(project_type) as type,
-	    min(status) as status,
+	    min(vw_project_sla.project_type) as type,
+	    min(vw_project_sla.status) as status,
         min(createdon) as createdon,
         min(appliedresponsesla) as appliedresponsesla,
         min(responseduedate) as responsedue_date,
@@ -257,6 +263,9 @@ stats as (
 		min(final_fix) as final_fix,
 		min(final_fix_hours) as final_fix_hours,
 
+        min(territories.reference) as territory_id,
+        min(territories.name) as territory_name,
+
 		-- aggregations
         count(project_id) as total_projects,
 		sum(total_workitems) as total_workitems,
@@ -280,6 +289,7 @@ stats as (
             when min(final_fix) > min(first_fix) then 1 
          end) as is_refix
     from vw_project_sla
+        left outer join territories on territories.territory_sk = vw_project_sla.territory_sk
     where project_id is not null
     group by project_id, report_date, report_year, report_month, report_day
     order by report_year ASC, report_month ASC, report_day ASC

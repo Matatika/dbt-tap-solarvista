@@ -13,6 +13,13 @@ with stats as (
         sum(total_open) as total_open,
         sum(total_closed) as total_closed,
 
+        --
+        -- These aged / rolling totals are not correct, they are meant to be the number open older than 14 days on the report_date
+        -- They are instead, the number open x days ago, as the world stands now.
+        -- Plus the createdon date is NULL in some records, throwing the totals off
+        --
+        -- rolling totals
+        (select sum(total_open) from {{ ref('vw_project_sla') }}) as total_rolling_open,
         -- total projects opened in last 7 days
         sum(sum(total_open)) 
             over (order by report_year, report_month, report_day rows between 6 preceding and current row)
@@ -24,11 +31,11 @@ with stats as (
         -- total projects older than 7 days on this day
         sum(sum(total_open)) over (
                 ORDER BY report_year, report_month, report_day ROWS BETWEEN UNBOUNDED PRECEDING AND 7 PRECEDING
-            ) as total_older_than_7days,
+            ) as total_open_older_than_7days,
         -- total projects older than 14 days on this day
         sum(sum(total_open)) over (
                 ORDER BY report_year, report_month, report_day ROWS BETWEEN UNBOUNDED PRECEDING AND 14 PRECEDING
-            ) as total_older_than_14days,
+            ) as total_open_older_than_14days,
         -- response SLA aggregations
         sum(response_within_sla) as total_response_within_sla,
         round(avg(first_response_hours)::numeric, 1) as avg_first_response_hours,
@@ -68,10 +75,11 @@ daily_projects_stats as (
         total_workitems,
         total_open,
         total_closed,
+        total_rolling_open,
         total_open_last_7days,
         total_open_last_14days,
-        total_older_than_7days,
-        total_older_than_14days,
+        total_open_older_than_7days,
+        total_open_older_than_14days,
 
         total_response_within_sla,
         response_sla_percent,

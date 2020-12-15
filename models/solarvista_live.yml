@@ -61,7 +61,7 @@ models:
       - name: status
         tests:
           - accepted_values:
-              values: ['Active', 'Closed', 'Cancelled']
+              values: ['Active', 'Closed', 'Cancelled', 'Pending Acceptance']
 
   - name: fact_workitem
     columns:
