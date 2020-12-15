@@ -181,6 +181,8 @@ vw_project_sla as (
         max(workitems_closed.stage_transition_received_at) as final_fix,
 	    (case 
 		     when min(workitems_closed.stage_transition_received_at) is not null then 0 
+		     when min(workitems_remoteclosed.stage_transition_received_at) is not null then 0 
+		     when min(workitems_quickclose.stage_transition_received_at) is not null then 0 
 		     when min(projects.status) = 'Active' then 1 
 		 end) as is_open,
         (case 
@@ -278,6 +280,7 @@ stats as (
             when min(final_fix) > min(first_fix) then 1 
          end) as is_refix
     from vw_project_sla
+    where project_id is not null
     group by project_id, report_date, report_year, report_month, report_day
     order by report_year ASC, report_month ASC, report_day ASC
 )

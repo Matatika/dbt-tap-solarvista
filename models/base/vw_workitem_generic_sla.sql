@@ -63,8 +63,8 @@ where workitems_history.stage_stage_type = 'Working'
 vw_workitem_generic_sla as (
     select distinct 
     workitems.work_item_id,
-    projects.reference,
-    projects.createdon,    
+    projects.reference as project_id,
+    projects.createdon,   
     projects.responseduedate,
     projects.fixduedate,
     workitems_accepted.stage_transition_received_at as workitem_accepted_received_at,    

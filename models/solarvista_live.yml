@@ -1,0 +1,71 @@
+version: 2
+
+sources:
+  - name: solarvista_live
+    schema: cityfm
+    description: A replica of the postgres database used to power the jaffle_shop app.
+    tables:
+      - name: customer_stream
+        columns:
+          - name: reference
+            description: Primary key of the table
+            tests:
+              - unique
+              - not_null
+
+      - name: project_stream
+        columns:
+          - name: reference
+            description: Primary key of the table
+            tests:
+              - unique
+              - not_null
+
+          - name: customer_id
+            description: Foreign key to customers
+
+          - name: status
+            tests:
+              - accepted_values:
+                  values: ['Active', 'Closed', 'Cancelled', 'Pending Acceptance']
+
+      - name: workitem_stream
+        columns:
+          - name: work_item_id
+            description: Primary key of the table
+            tests:
+              - unique
+              - not_null
+
+          - name: properties_customer_id
+            description: Foreign key to customers
+
+          - name: properties_project_id
+            description: Foreign key to projects
+
+
+models:
+  - name: dim_customer
+    columns:
+      - name: customer_sk
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_project
+    columns:
+      - name: project_sk
+        tests:
+          - unique
+          - not_null
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['Active', 'Closed', 'Cancelled']
+
+  - name: fact_workitem
+    columns:
+      - name: work_item_id
+        tests:
+          - unique
+          - not_null
