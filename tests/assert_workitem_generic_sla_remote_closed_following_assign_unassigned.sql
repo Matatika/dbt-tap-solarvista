@@ -9,3 +9,11 @@ from {{ ref('vw_workitem_generic_sla' )}}
 where project_id = '74125570'
 group by project_id
 having not(count(work_item_id) = 2)
+union
+select
+    project_id,
+    sum(total_closed) as total_closed
+from {{ ref('vw_project_sla' )}}
+where project_id = '74125570'
+group by project_id
+having not(sum(total_closed) = 1)
