@@ -82,7 +82,7 @@ vw_workitem_generic_sla as (
     workitems_working.stage_transition_received_at as workitem_working_received_at    
 from workitems
 left join projects 
-on projects.reference = workitems.project_id
+    on projects.reference = workitems.project_id
 left join workitems_accepted using (work_item_id)
 left join workitems_closed using (work_item_id)
 left join workitems_assigned using (work_item_id)
