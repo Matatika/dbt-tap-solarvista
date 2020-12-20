@@ -11,8 +11,8 @@ having not(sum(total_workitems) = 3)
 union
 select
     project_id,
-    sum(total_closed) as total_closed
+    sum(is_closed) as total_closed
 from {{ ref('vw_project_sla' )}}
 where project_id = '71602551'
 group by project_id
-having not(sum(total_closed) = 1)
+having not(sum(is_closed) = 1)

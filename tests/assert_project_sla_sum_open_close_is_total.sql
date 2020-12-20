@@ -5,7 +5,7 @@
 -- Expect equal to total number of projects
 select
     project_id,
-    sum(total_open) + sum(total_closed) as total_open_close
+    sum(is_open) + sum(is_closed) as total_open_close
 from {{ ref('vw_project_sla' )}}
 group by 1
-having not(sum(total_open) + sum(total_closed) = sum(total_projects))
+having not(sum(is_open) + sum(is_closed) = sum(total_projects))

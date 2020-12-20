@@ -185,16 +185,16 @@ vw_project_sla as (
         max(workitems_closed.stage_transition_received_at) as final_fix,
 	    (case 
 		     when max(workitems_remoteclosed.stage_transition_received_at) > max(workitems_closed.stage_transition_received_at) then 0 
-		     when min(workitems_closed.stage_transition_received_at) is not null then 0 
-		     when min(workitems_quickclose.stage_transition_received_at) is not null then 0 
 		     when min(workitems_remoteclosed.stage_transition_received_at) is not null then 0 
+		     when min(workitems_quickclose.stage_transition_received_at) is not null then 0 
+		     when min(workitems_closed.stage_transition_received_at) is not null then 0 
 		     when min(projects.status) = 'Active' then 1 
 		 end) as is_open,
         (case 
 		     when max(workitems_remoteclosed.stage_transition_received_at) > max(workitems_closed.stage_transition_received_at) then 1 
-		     when min(workitems_closed.stage_transition_received_at) is not null then 1 
-		     when min(workitems_quickclose.stage_transition_received_at) is not null then 1 
 		     when min(workitems_remoteclosed.stage_transition_received_at) is not null then 1 
+		     when min(workitems_quickclose.stage_transition_received_at) is not null then 1 
+		     when min(workitems_closed.stage_transition_received_at) is not null then 1 
 		     when min(projects.status) = 'Pending Acceptance' then 1 
 		     when min(projects.status) = 'Closed' then 1 
 		 end) as is_closed,
@@ -270,9 +270,9 @@ stats as (
 		-- aggregations
         count(project_id) as total_projects,
 		sum(total_workitems) as total_workitems,
-		sum(is_open) as total_open,
-		sum(is_closed) as total_closed,
-		sum(is_cancelled) as total_cancelled,
+		min(is_open) as is_open,
+		min(is_closed) as is_closed,
+		min(is_cancelled) as is_cancelled,
 		(case 
             when min(is_cancelled) = 1 then 1 
             when min(appliedresponsesla) is null then 1 
