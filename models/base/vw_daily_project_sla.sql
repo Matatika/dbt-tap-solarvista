@@ -22,6 +22,7 @@ with daily_stats as (
             from {{ ref('vw_project_sla') }} p
             where vps.report_date between p.createdon and p.remoteclosed_timestamp
             or vps.report_date between p.createdon and p.quickclose_timestamp
+            or vps.report_date between p.createdon and p.cancelled_timestamp
             or vps.report_date between p.createdon and p.closed_timestamp
             or p.is_open = 1
         ) as total_open,
@@ -31,6 +32,7 @@ with daily_stats as (
             from {{ ref('vw_project_sla') }} p
             where p.remoteclosed_timestamp::date = vps.report_date
             or p.quickclose_timestamp::date = vps.report_date
+            or p.cancelled_timestamp::date = vps.report_date
             or p.closed_timestamp::date = vps.report_date
         ) as total_closed
     from {{ ref('vw_project_sla') }} vps

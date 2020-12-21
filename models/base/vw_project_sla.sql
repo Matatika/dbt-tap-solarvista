@@ -187,6 +187,7 @@ vw_project_sla as (
 		     when max(workitems_remoteclosed.stage_transition_received_at) > max(workitems_closed.stage_transition_received_at) then 0 
 		     when min(workitems_remoteclosed.stage_transition_received_at) is not null then 0 
 		     when min(workitems_quickclose.stage_transition_received_at) is not null then 0 
+		     when min(workitems_cancelled.stage_transition_received_at) is not null then 0 
 		     when min(workitems_closed.stage_transition_received_at) is not null then 0 
 		     when min(projects.status) = 'Active' then 1 
 		 end) as is_open,
@@ -194,6 +195,7 @@ vw_project_sla as (
 		     when max(workitems_remoteclosed.stage_transition_received_at) > max(workitems_closed.stage_transition_received_at) then 1 
 		     when min(workitems_remoteclosed.stage_transition_received_at) is not null then 1 
 		     when min(workitems_quickclose.stage_transition_received_at) is not null then 1 
+		     when min(workitems_cancelled.stage_transition_received_at) is not null then 1 
 		     when min(workitems_closed.stage_transition_received_at) is not null then 1 
 		     when min(projects.status) = 'Pending Acceptance' then 1 
 		     when min(projects.status) = 'Closed' then 1 
