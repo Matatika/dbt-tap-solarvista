@@ -5,6 +5,6 @@ select
     report_date,
     sum(total_rolling_open)
 from {{ ref('vw_daily_project_sla' ) }}
-where report_date in (select max(report_date) from {{ ref('vw_daily_project_sla' ) }})
+where report_date in (select max(report_date) + 1 from {{ ref('vw_daily_project_sla' ) }})
 group by 1
 having not(sum(total_rolling_open) = (select sum(is_open) from {{ ref('vw_project_sla' ) }} vps))
