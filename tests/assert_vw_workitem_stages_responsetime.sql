@@ -3,9 +3,9 @@
 select case when responsetime <> 0 then 1 else 0 end 
 from 
 (select 
-DATE_PART('day',responseduedate ::timestamp - accepted_timestamp::timestamp) * 24 +
-DATE_PART('hour',responseduedate ::timestamp - accepted_timestamp::timestamp) as responsetime
+DATE_PART('day',responseduedate ::timestamp - preworking_timestamp::timestamp) * 24 +
+DATE_PART('hour',responseduedate ::timestamp - preworking_timestamp::timestamp) as responsetime
 from {{ ref('vw_workitem_stages') }}
 where reference = '71511918') as response
-where responsetime <> 45
+where responsetime <> 43
 

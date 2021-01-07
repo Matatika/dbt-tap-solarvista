@@ -173,17 +173,19 @@ vw_project_sla as (
         min(workitems_assigned.stage_transition_received_at) as assigned_timestamp,  
         min(workitems_cancelled.stage_transition_received_at) as cancelled_timestamp,  
 --        min(workitem_stages.discarded_timestamp) as discarded_timestamp,  
---        min(workitem_stages.postworking_timestamp) as postworking_timestamp,  
---        min(workitem_stages.preworking_timestamp) as preworking_timestamp,  
+--        min(workitem_stages.postworking_timestamp) as postworking_timestamp,
+        min(workitems_preworking.stage_transition_received_at) as preworking_timestamp,
         min(workitems_quickclose.stage_transition_received_at) as quickclose_timestamp,  
         min(workitems_remoteclosed.stage_transition_received_at) as remoteclosed_timestamp,  
 --        min(workitem_stages.travellingfrom_timestamp) as travellingfrom_timestamp,  
 --        min(workitem_stages.travellingto_timestamp) as travellingto_timestamp,  
 --        min(workitem_stages.unassigned_timestamp) as unassigned_timestamp,  
 --        min(workitem_stages.working_timestamp) as working_timestamp,
-        min(workitems_accepted.stage_transition_received_at) as first_response,    
         min(workitems_closed.stage_transition_received_at) as first_fix,
         max(workitems_closed.stage_transition_received_at) as final_fix,
+
+        -- First response, used to calculate Response SLA
+        min(workitems_preworking.stage_transition_received_at) as first_response,  
 	    (case 
 		     when max(workitems_remoteclosed.stage_transition_received_at) > max(workitems_closed.stage_transition_received_at) then 0 
 		     when min(workitems_remoteclosed.stage_transition_received_at) is not null then 0 
@@ -254,7 +256,7 @@ stats as (
         min(cancelled_timestamp) as cancelled_timestamp,  
 --        min(discarded_timestamp) as discarded_timestamp,  
 --        min(postworking_timestamp) as postworking_timestamp,  
---        min(preworking_timestamp) as preworking_timestamp,  
+        min(preworking_timestamp) as preworking_timestamp,  
         min(quickclose_timestamp) as quickclose_timestamp,  
         min(remoteclosed_timestamp) as remoteclosed_timestamp,  
 --        min(travellingfrom_timestamp) as travellingfrom_timestamp,  
