@@ -189,11 +189,15 @@ vw_project_sla as (
 --        min(workitem_stages.travellingto_timestamp) as travellingto_timestamp,  
 --        min(workitem_stages.unassigned_timestamp) as unassigned_timestamp,  
 --        min(workitem_stages.working_timestamp) as working_timestamp,
-        min(workitems_closed.stage_transition_received_at) as first_fix,
-        max(workitems_closed.stage_transition_received_at) as final_fix,
 
-        -- First response, used to calculate Response SLA
-        min(workitems_preworking.stage_transition_received_at) as first_response,  
+        -- Used to calculate SLAs
+        min(projects.closedon) as first_fix,
+        min(projects.closedon) as final_fix,
+        (case
+             when min(workitems_preworking.stage_transition_received_at) is not null 
+                then min(workitems_preworking.stage_transition_received_at)
+                else min(projects.closedon)
+         end ) as first_response,  
 	    (case 
              when max(workitems_remoteclosed.stage_transition_received_at) > max(workitems_closed.stage_transition_received_at) then 0 
              when min(workitems_remoteclosed.stage_transition_received_at) is not null then 0 
@@ -215,16 +219,7 @@ vw_project_sla as (
 	    (case 
 		     when min(workitems_cancelled.stage_transition_received_at) is not null then 1 
 		     when min(projects.status) = 'Cancelled' then 1 
-		 end) as is_cancelled,
-        --To compute "Response" SLA by comparing project responseduedate with workitem accepted date
-        DATE_PART('day',min(projects.responseduedate)::timestamp - min(workitems_accepted.stage_transition_received_at)::timestamp) * 24 +
-        DATE_PART('hour',min(projects.responseduedate)::timestamp - min(workitems_accepted.stage_transition_received_at)::timestamp) as first_response_hours,
-        --To compute "First Fix" SLA by comparing project created on with FIRST workitem closed transition date
-        DATE_PART('day',min(workitems_closed.stage_transition_received_at)::timestamp - min(projects.createdon)::timestamp) * 24 +
-        DATE_PART('hour',min(workitems_closed.stage_transition_received_at)::timestamp - min(projects.createdon)::timestamp) as first_fix_hours,
-        --To compute "Final Fix" SLA by comparing project created on with LAST workitem closed transition date
-        DATE_PART('day',max(workitems_closed.stage_transition_received_at)::timestamp - min(projects.createdon)::timestamp) * 24 +
-        DATE_PART('hour',max(workitems_closed.stage_transition_received_at)::timestamp - min(projects.createdon)::timestamp) as final_fix_hours    
+		 end) as is_cancelled
     from workitems
     left join projects 
         on projects.project_sk = workitems.project_sk
@@ -273,11 +268,8 @@ stats as (
 --        min(unassigned_timestamp) as unassigned_timestamp,  
 --        min(working_timestamp) as working_timestamp,
 		min(first_response) as first_response,
-		min(first_response_hours) as first_response_hours,
 		min(first_fix) as first_fix,
-		min(first_fix_hours) as first_fix_hours,
 		min(final_fix) as final_fix,
-		min(final_fix_hours) as final_fix_hours,
 
         min(territories.reference) as territory_id,
         min(territories.name) as territory_name,
@@ -292,15 +284,21 @@ stats as (
 		min(is_open) as is_open,
 		min(is_closed) as is_closed,
 		min(is_cancelled) as is_cancelled,
+        -- Compute "Response" SLA by comparing project 'responseduedate' with 'PreWorking' stage
+        {{ dbt_utils.datediff('min(responseduedate)', 'min(first_response)', 'hour') }} as first_response_hours,
 		(case 
             when min(is_cancelled) = 1 then 1 
             when min(appliedresponsesla) is null then 1 
             when {{ dbt_utils.datediff('min(responseduedate)', 'min(first_response)', 'hour') }} <= 0 then 1 else 0 
          end) as response_within_sla,
+        -- Compute "First Fix" SLA by comparing project ? with '?' stage
+        {{ dbt_utils.datediff('min(fixduedate)', 'min(first_fix)', 'hour') }} as first_fix_hours,
 		(case 
             when min(is_cancelled) = 1 then 1 
             when {{ dbt_utils.datediff('min(fixduedate)', 'min(first_fix)', 'hour') }} <= 0 then 1 else 0 
          end) as first_fix_within_sla,
+        -- Compute "Final Fix" SLA by comparing project 'fixduedate' with project 'closedon'
+        {{ dbt_utils.datediff('min(fixduedate)', 'min(final_fix)', 'hour') }} as final_fix_hours,
 		(case 
             when min(is_cancelled) = 1 then 1 
             when {{ dbt_utils.datediff('min(fixduedate)', 'min(final_fix)', 'hour') }} <= 0 then 1 else 0 

@@ -24,7 +24,8 @@ with daily_stats as (
             or vps.report_date between p.createdon and p.quickclose_timestamp
             or vps.report_date between p.createdon and p.cancelled_timestamp
             or vps.report_date between p.createdon and p.closed_timestamp
-            or p.is_open = 1
+            or p.closedon > vps.report_date
+            or p.closedon IS NULL
         ) as total_open,
 
         -- Calculate the number of work orders closed on this report_date
@@ -34,6 +35,8 @@ with daily_stats as (
             or p.quickclose_timestamp::date = vps.report_date
             or p.cancelled_timestamp::date = vps.report_date
             or p.closed_timestamp::date = vps.report_date
+            or p.closedon < vps.report_date
+            or p.closedon IS NOT NULL
         ) as total_closed
     from {{ ref('vw_project_sla') }} vps
     group by report_date, report_year, report_month, report_day
