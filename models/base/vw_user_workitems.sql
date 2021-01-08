@@ -24,6 +24,6 @@ stats_user_workitems as (
         workitem_facts.total_duration_hours,
         coalesce(workitem_facts.total_workitems, 0) as total_workitems
     from users
-    left join workitem_facts on users.user_id = workitem_facts.assigned_user_id
+        left join workitem_facts on users.user_id = workitem_facts.assigned_user_id
 )
 select * from stats_user_workitems
