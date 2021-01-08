@@ -8,6 +8,12 @@ workitems as (
 projects as (
      select distinct * from {{ ref('dim_project') }}
 ),
+customers as (
+     select distinct * from {{ ref('dim_customer') }}
+),
+sites as (
+     select distinct * from {{ ref('dim_site') }}
+),
 territories as (
      select distinct * from {{ ref('dim_territory') }}
 ),
@@ -157,6 +163,8 @@ INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stag
 vw_project_sla as (
     select distinct
         projects.reference as project_id,
+        min(workitems.customer_sk) as customer_sk,
+        min(workitems.site_sk) as site_sk,
         min(workitems.territory_sk) as territory_sk,
 	    min(projects.project_type) as project_type,
 	    min(projects.status) as status,
@@ -273,6 +281,10 @@ stats as (
 
         min(territories.reference) as territory_id,
         min(territories.name) as territory_name,
+        min(sites.reference) as site_id,
+        min(sites.name) as site_name,
+        min(customers.reference) as customer_id,
+        min(customers.name) as customer_name,
 
 		-- aggregations
         count(project_id) as total_projects,
@@ -297,6 +309,8 @@ stats as (
             when min(final_fix) > min(first_fix) then 1 
          end) as is_refix
     from vw_project_sla
+        left outer join customers on customers.customer_sk = vw_project_sla.customer_sk
+        left outer join sites on sites.site_sk = vw_project_sla.site_sk
         left outer join territories on territories.territory_sk = vw_project_sla.territory_sk
     where project_id is not null
     group by project_id, report_date, report_year, report_month, report_day

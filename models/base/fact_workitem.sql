@@ -6,6 +6,9 @@ with workitems as (
 customers as (
     select * from {{ ref('dim_customer') }}
 ),
+sites as (
+    select * from {{ ref('dim_site') }}
+),
 users as (
     select * from {{ ref('dim_user') }}
 ),
@@ -56,6 +59,7 @@ fact_workitem as (
         users.users_sk, 
         projects.project_sk,
         territories.territory_sk,
+        sites.site_sk,
         customers.customer_sk,
 
         -- metrics
@@ -68,6 +72,7 @@ fact_workitem as (
 	left join users on users.user_id = workitems.assigned_user_id
 	left join projects on projects.reference = workitems.properties_project_id
     left join territories on territories.reference = workitems.properties_territories_id
+    left join sites on sites.reference = workitems.properties_site_id
     left join customers on customers.reference = workitems.properties_customer_id
 )
 select * from fact_workitem
