@@ -83,18 +83,18 @@ aggregations as (
             ) as total_open_older_than_14days,
         -- response SLA aggregations
         sum(response_within_sla) as total_response_within_sla,
-        round(avg(first_response_hours)::numeric, 1) as avg_first_response_hours,
-        round( (sum(response_within_sla) / NULLIF(sum(total_projects), 0)) * 100, 1) 
+        round( avg(first_response_hours)::numeric, 1) as avg_first_response_hours,
+        round( ((sum(response_within_sla) / NULLIF(sum(total_projects), 0)) * 100)::numeric, 2) 
             as response_sla_percent,
         -- first fix SLA aggregations
         sum(first_fix_within_sla) as total_first_fix_within_sla,
-        round(avg(first_fix_hours)::numeric, 1) as avg_first_fix_hours,
-        round( (sum(first_fix_within_sla) / NULLIF(sum(total_projects), 0)) * 100, 1) 
+        round( avg(first_fix_hours)::numeric, 1) as avg_first_fix_hours,
+        round( ((sum(first_fix_within_sla) / NULLIF(sum(total_projects), 0)) * 100)::numeric, 2) 
             as first_fix_sla_percent,
         -- final fix SLA aggregations
         sum(final_fix_within_sla) as total_final_fix_within_sla,
-        round(avg(final_fix_hours)::numeric, 1) as avg_final_fix_hours,
-        round( (sum(final_fix_within_sla) / NULLIF(sum(total_projects), 0)) * 100, 1) 
+        round( avg(final_fix_hours)::numeric, 1) as avg_final_fix_hours,
+        round( ((sum(final_fix_within_sla) / NULLIF(sum(total_projects), 0)) * 100)::numeric, 2) 
             as final_fix_sla_percent
     from daily_stats
     group by report_date, report_year, report_month, report_day, customer_id
