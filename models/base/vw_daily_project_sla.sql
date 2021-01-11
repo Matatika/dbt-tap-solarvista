@@ -23,10 +23,12 @@ with daily_stats as (
             from {{ ref('vw_project_sla') }} p
             where p.createdon::date < vps.report_date
             and p.final_fix::date >= vps.report_date
+            and p.customer_id = vps.customer_id
             or p.project_id in 
                 (select project_id 
                     from {{ ref('vw_project_sla') }} p2
                     where p2.createdon::date < vps.report_date
+                    and p2.customer_id = vps.customer_id
                     and p2.is_open = 1)
         ) as total_open,
 
@@ -34,6 +36,7 @@ with daily_stats as (
         (select count(*)
             from {{ ref('vw_project_sla') }} p
             where p.closedon::date = vps.report_date
+            and p.customer_id = vps.customer_id
         ) as total_closed
     from {{ ref('vw_project_sla') }} vps
     group by report_date, report_year, report_month, report_day, customer_id
