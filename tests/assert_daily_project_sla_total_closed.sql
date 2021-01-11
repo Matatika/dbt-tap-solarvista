@@ -5,16 +5,16 @@ select
     report_date,
     sum(total_closed)
 from {{ ref('vw_daily_project_sla' ) }}
-where report_date = '2021-01-11'::date
+where report_date = '2020-11-11'::date
 group by 1
-having not(sum(total_closed) != 33)
+having not(sum(total_closed) != 122)
 union
 -- check the last day of data
 select
     report_date,
     sum(total_closed)
 from {{ ref('vw_daily_project_sla' ) }}
-where report_date = (select max(report_date) from {{ ref('vw_daily_project_sla' ) }})
+where report_date = (select max(report_date) + 1 from {{ ref('vw_daily_project_sla' ) }})
 group by 1
 having not(sum(total_closed) = (
         select sum(is_closed) 
