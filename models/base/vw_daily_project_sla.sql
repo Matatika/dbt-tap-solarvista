@@ -6,6 +6,7 @@ with daily_stats as (
         report_year,
         report_month,
         report_day,
+        customer_id,
 
         -- basic aggregations
         sum(total_projects) as total_projects,
@@ -32,10 +33,10 @@ with daily_stats as (
         -- Calculate the number of work orders closed on this report_date
         (select count(*)
             from {{ ref('vw_project_sla') }} p
-            where p.final_fix::date = vps.report_date
+            where p.closedon::date = vps.report_date
         ) as total_closed
     from {{ ref('vw_project_sla') }} vps
-    group by report_date, report_year, report_month, report_day
+    group by report_date, report_year, report_month, report_day, customer_id
     order by report_year ASC, report_month ASC, report_day ASC
 ),
 
@@ -45,6 +46,7 @@ aggregations as (
         report_year,
         report_month,
         report_day,
+        customer_id,
 
         -- basic aggregations
 	    sum(total_projects) as total_projects,
@@ -92,12 +94,16 @@ aggregations as (
         round( (sum(final_fix_within_sla) / NULLIF(sum(total_projects), 0)) * 100, 1) 
             as final_fix_sla_percent
     from daily_stats
-    group by report_date, report_year, report_month, report_day
+    group by report_date, report_year, report_month, report_day, customer_id
     order by report_year ASC, report_month ASC, report_day ASC
 ),
 
 dates as (
     select * from {{ ref('dim_date') }}
+),
+
+customers as (
+     select distinct * from {{ ref('dim_customer') }}
 ),
 
 daily_projects_stats as (
@@ -110,7 +116,10 @@ daily_projects_stats as (
         dates.day_of_year,
         dates.day_of_week,
         dates.day_of_week_name,
-    
+
+        customer_id,
+        customers.name as customer_name,
+
         total_projects,
         total_workitems,
         total_open,
@@ -134,5 +143,6 @@ daily_projects_stats as (
         final_fix_sla_percent
     from aggregations
         left outer join dates on dates.date_day = aggregations.report_date
+        left outer join customers on customers.reference = aggregations.customer_id
 )
 select * from daily_projects_stats
