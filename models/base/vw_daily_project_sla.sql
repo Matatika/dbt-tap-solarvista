@@ -17,26 +17,22 @@ with daily_stats as (
 		sum(first_fix_hours) as first_fix_hours,
 		sum(final_fix_hours) as final_fix_hours,
 
-        -- Calculate the total number of open work orders on this report_date
+        -- Calculate the total rolling open work orders on this report_date
         (select count(*)
             from {{ ref('vw_project_sla') }} p
-            where vps.report_date between p.createdon and p.remoteclosed_timestamp
-            or vps.report_date between p.createdon and p.quickclose_timestamp
-            or vps.report_date between p.createdon and p.cancelled_timestamp
-            or vps.report_date between p.createdon and p.closed_timestamp
-            or p.closedon > vps.report_date
-            or p.closedon IS NULL
+            where p.createdon::date < vps.report_date
+            and p.final_fix::date >= vps.report_date
+            or p.project_id in 
+                (select project_id 
+                    from {{ ref('vw_project_sla') }} p2
+                    where p2.createdon::date < vps.report_date
+                    and p2.is_open = 1)
         ) as total_open,
 
         -- Calculate the number of work orders closed on this report_date
         (select count(*)
             from {{ ref('vw_project_sla') }} p
-            where p.remoteclosed_timestamp::date = vps.report_date
-            or p.quickclose_timestamp::date = vps.report_date
-            or p.cancelled_timestamp::date = vps.report_date
-            or p.closed_timestamp::date = vps.report_date
-            or p.closedon < vps.report_date
-            or p.closedon IS NOT NULL
+            where p.final_fix::date = vps.report_date
         ) as total_closed
     from {{ ref('vw_project_sla') }} vps
     group by report_date, report_year, report_month, report_day
@@ -54,6 +50,7 @@ aggregations as (
 	    sum(total_projects) as total_projects,
         sum(total_workitems) as total_workitems,
         sum(total_open) as total_open,
+        sum(total_projects) as total_opened,
         sum(total_closed) as total_closed,
 
         --
