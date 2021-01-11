@@ -194,26 +194,33 @@ vw_project_sla as (
         min(projects.closedon) as first_fix,
         min(projects.closedon) as final_fix,
         (case
+             -- Use PreWorking time as first response or closed time
              when min(workitems_preworking.stage_transition_received_at) is not null 
                 then min(workitems_preworking.stage_transition_received_at)
-                else min(projects.closedon)
+             when min(projects.closedon) is not null then min(projects.closedon)
+             when min(workitems_remoteclosed.stage_transition_received_at) is not null 
+                then min(workitems_remoteclosed.stage_transition_received_at)
+             when min(workitems_quickclose.stage_transition_received_at) is not null 
+                then min(workitems_quickclose.stage_transition_received_at)
+             when min(workitems_cancelled.stage_transition_received_at) is not null 
+                then min(workitems_cancelled.stage_transition_received_at)
          end ) as first_response,  
 	    (case 
+             when min(projects.closedon) is not null then 0
              when max(workitems_remoteclosed.stage_transition_received_at) > max(workitems_closed.stage_transition_received_at) then 0 
              when min(workitems_remoteclosed.stage_transition_received_at) is not null then 0 
              when min(workitems_quickclose.stage_transition_received_at) is not null then 0 
              when min(workitems_cancelled.stage_transition_received_at) is not null then 0 
              when workitems.count = 0 then 0
-             when min(projects.closedon) is not null then 0
 		     when min(projects.status) = 'Active' then 1 else 0
 		 end) as is_open,
         (case
+             when min(projects.closedon) is not null then 1
              when max(workitems_remoteclosed.stage_transition_received_at) > max(workitems_closed.stage_transition_received_at) then 1 
              when min(workitems_remoteclosed.stage_transition_received_at) is not null then 1 
              when min(workitems_quickclose.stage_transition_received_at) is not null then 1 
              when min(workitems_cancelled.stage_transition_received_at) is not null then 1 
              when workitems.count = 0 then 1
-             when min(projects.closedon) is not null then 1
 		     when min(projects.status) = 'Active' then 0 else 1 
 		 end) as is_closed,
 	    (case 
