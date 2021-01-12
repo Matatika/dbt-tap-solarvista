@@ -46,7 +46,11 @@ select
     {{ day_name('d.date_day', short=false) }} as day_of_week_name,
     {{ day_name('d.date_day', short=true) }} as day_of_week_name_short,
     cast({{ date_part('day', 'd.date_day') }} as {{ dbt_utils.type_int() }}) as day_of_month,
-    cast({{ date_part('doy', 'd.date_day') }} as {{ dbt_utils.type_int() }}) as day_of_year
+    cast({{ date_part('doy', 'd.date_day') }} as {{ dbt_utils.type_int() }}) as day_of_year,
+
+    -- Week number, and a week key to sort
+    cast(to_char(d.date_day, 'IYYYYIW') as {{ dbt_utils.type_int() }}) as week_key,
+    cast(to_char(d.date_day, 'WW') as {{ dbt_utils.type_int() }}) as week_of_year
 
 from
     dates_with_prior_year_dates d

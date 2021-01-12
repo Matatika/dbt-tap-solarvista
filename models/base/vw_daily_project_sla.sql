@@ -119,6 +119,8 @@ daily_projects_stats as (
         dates.day_of_year,
         dates.day_of_week,
         dates.day_of_week_name,
+        dates.week_key,
+        dates.week_of_year,
 
         customer_id,
         customers.name as customer_name,
