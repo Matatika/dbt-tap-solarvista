@@ -14,7 +14,7 @@ with daily_stats as (
         sum(response_within_sla) as response_within_sla,
         sum(first_fix_within_sla) as first_fix_within_sla,
         sum(final_fix_within_sla) as final_fix_within_sla,
-		sum(first_response_hours) as first_response_hours,
+		sum(response_hours) as response_hours,
 		sum(first_fix_hours) as first_fix_hours,
 		sum(final_fix_hours) as final_fix_hours,
 
@@ -83,7 +83,7 @@ aggregations as (
             ) as total_open_older_than_14days,
         -- response SLA aggregations
         sum(response_within_sla) as total_response_within_sla,
-        round( avg(first_response_hours)::numeric, 1) as avg_first_response_hours,
+        round( avg(response_hours)::numeric, 1) as avg_first_response_hours,
         round( ((sum(response_within_sla) / NULLIF(sum(total_projects), 0)) * 100)::numeric, 2) 
             as response_sla_percent,
         -- first fix SLA aggregations

@@ -8,15 +8,6 @@ workitems as (
 projects as (
      select distinct * from {{ ref('dim_project') }}
 ),
-customers as (
-     select distinct * from {{ ref('dim_customer') }}
-),
-sites as (
-     select distinct * from {{ ref('dim_site') }}
-),
-territories as (
-     select distinct * from {{ ref('dim_territory') }}
-),
 workitems_accepted as (
 --Sql to retrieve the earliest stage transition date
 select ht.work_item_id,ht.stage_transition_received_at
@@ -292,13 +283,16 @@ project_states as (
 stats as (
     select distinct
         project_id,
+        min(customer_sk) as customer_sk,
+        min(site_sk) as site_sk,
+        min(territory_sk) as territory_sk,
         createdon::date as report_date,
         EXTRACT(YEAR FROM createdon)::integer as report_year,
         EXTRACT(MONTH FROM createdon)::integer as report_month,
         EXTRACT(DAY FROM createdon)::integer as report_day,
 
-	    min(project_type) as type,
-	    min(project_status) as status,
+	    min(project_type) as project_type,
+	    min(project_status) as project_status,
         min(createdon) as createdon,
         min(closedon) as closedon,
         min(appliedresponsesla) as appliedresponsesla,
@@ -328,15 +322,8 @@ stats as (
 		min(firstfix_date) as first_fix,
 		min(finalfix_date) as final_fix,
 
-        min(territories.reference) as territory_id,
-        min(territories.name) as territory_name,
-        min(sites.reference) as site_id,
-        min(sites.name) as site_name,
-        min(customers.reference) as customer_id,
-        min(customers.name) as customer_name,
-
         -- Compute "Response" SLA by comparing project 'responseduedate' with 'PreWorking' stage
-        {{ dbt_utils.datediff('min(responsedue_date)', 'min(firstresponse_date)', 'hour') }} as first_response_hours,
+        {{ dbt_utils.datediff('min(responsedue_date)', 'min(firstresponse_date)', 'hour') }} as response_hours,
 		(case 
             when min(is_cancelled) = 1 then 1 
             when min(appliedresponsesla) is null then 1 
@@ -358,11 +345,89 @@ stats as (
             when min(finalfix_date) > min(firstfix_date) then 1 
          end) as is_refix
     from project_states
-        left outer join customers on customers.customer_sk = project_states.customer_sk
-        left outer join sites on sites.site_sk = project_states.site_sk
-        left outer join territories on territories.territory_sk = project_states.territory_sk
     where project_id is not null
     group by project_id, report_date, report_year, report_month, report_day
     order by report_year ASC, report_month ASC, report_day ASC
+),
+
+customers as (
+     select distinct * from {{ ref('dim_customer') }}
+),
+sites as (
+     select distinct * from {{ ref('dim_site') }}
+),
+territories as (
+     select distinct * from {{ ref('dim_territory') }}
+),
+dates as (
+    select * from {{ ref('dim_date') }}
+),
+
+final as (
+    select
+        project_id,
+        report_date,
+        report_year,
+        report_month,
+        report_day,
+
+	    project_type,
+	    project_status,
+        createdon,
+        closedon,
+        appliedresponsesla,
+        responsedue_date,
+        fixdue_date,
+        total_projects,
+		total_workitems,
+
+        accepted_timestamp,
+        closed_timestamp,  
+        assigned_timestamp,  
+        cancelled_timestamp,  
+--      discarded_timestamp,  
+--      postworking_timestamp,  
+        preworking_timestamp,  
+        quickclose_timestamp,  
+        remoteclosed_timestamp,  
+--      travellingfrom_timestamp,  
+--      travellingto_timestamp,  
+--      unassigned_timestamp,  
+--      as working_timestamp,
+
+        is_open,
+        is_closed,
+        is_cancelled,
+        first_response,  
+		first_fix,
+		final_fix,
+        is_refix,
+
+        response_hours,
+        response_within_sla,
+        first_fix_hours,
+        first_fix_within_sla,
+        final_fix_hours,
+        final_fix_within_sla,
+
+        dates.day_of_month,
+        dates.day_of_year,
+        dates.day_of_week,
+        dates.day_of_week_name,
+        dates.week_key,
+        dates.week_of_year,
+        territories.reference as territory_id,
+        territories.name as territory_name,
+        sites.reference as site_id,
+        sites.name as site_name,
+        customers.reference as customer_id,
+        customers.name as customer_name
+
+
+    from stats
+        left outer join dates on dates.date_day = stats.report_date
+        left outer join customers on customers.customer_sk = stats.customer_sk
+        left outer join sites on sites.site_sk = stats.site_sk
+        left outer join territories on territories.territory_sk = stats.territory_sk
 )
-select * from stats
+select * from final
