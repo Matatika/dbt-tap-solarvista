@@ -49,7 +49,7 @@ select
     cast({{ date_part('doy', 'd.date_day') }} as {{ dbt_utils.type_int() }}) as day_of_year,
 
     -- Week number, and a week key to sort
-    cast(to_char(d.date_day, 'IYYYYIW') as {{ dbt_utils.type_int() }}) as week_key,
+    cast((to_char(d.date_day, 'YYYY') || right('0' || to_char(d.date_day, 'WW'), 2)) as {{ dbt_utils.type_int() }}) as week_key,
     cast(to_char(d.date_day, 'WW') as {{ dbt_utils.type_int() }}) as week_of_year
 
 from
