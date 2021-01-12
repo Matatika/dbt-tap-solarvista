@@ -9,7 +9,7 @@ where appliedresponsesla IS NOT NULL
 and first_response IS NULL
 and is_closed = 1
 and report_date > '2020-11-01'::date
-and status != 'Cancelled'
+and project_status != 'Cancelled'
 UNION
 select
     project_id
@@ -18,4 +18,4 @@ where responsedue_date IS NOT NULL
 and first_response IS NULL
 and is_closed = 1
 and report_date > '2020-11-01'::date
-and status != 'Cancelled'
+and project_status != 'Cancelled'
