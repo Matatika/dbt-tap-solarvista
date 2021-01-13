@@ -21,13 +21,13 @@ with daily_stats as (
         -- Calculate the total rolling open work orders on this report_date
         (select count(*)
             from {{ ref('vw_project_sla') }} p
-            where p.createdon::date < vps.report_date
-            and p.final_fix::date >= vps.report_date
+            where p.createdon::date <= vps.report_date
+            and p.final_fix::date > vps.report_date
             and p.customer_id = vps.customer_id
             or p.project_id in 
                 (select project_id 
                     from {{ ref('vw_project_sla') }} p2
-                    where p2.createdon::date < vps.report_date
+                    where p2.createdon::date <= vps.report_date
                     and p2.customer_id = vps.customer_id
                     and p2.is_open = 1)
         ) as total_open,
@@ -37,7 +37,15 @@ with daily_stats as (
             from {{ ref('vw_project_sla') }} p
             where p.closedon::date = vps.report_date
             and p.customer_id = vps.customer_id
-        ) as total_closed
+        ) as total_closed,
+
+        -- Calculate the number of work orders attended on this report_date
+        (select count(*)
+            from {{ ref('vw_project_sla') }} p
+            where p.preworking_timestamp::date = vps.report_date
+            and p.customer_id = vps.customer_id
+        ) as total_attended
+
     from {{ ref('vw_project_sla') }} vps
     group by report_date, report_year, report_month, report_day, customer_id
     order by report_year ASC, report_month ASC, report_day ASC
@@ -57,6 +65,7 @@ aggregations as (
         sum(total_open) as total_open,
         sum(total_projects) as total_opened,
         sum(total_closed) as total_closed,
+        sum(total_attended) as total_attended,
 
         --
         -- These aged / rolling totals are not correct, they are meant to be the number open older than 14 days on the report_date
@@ -129,6 +138,7 @@ daily_projects_stats as (
         total_workitems,
         total_open,
         total_closed,
+        total_attended,
         total_rolling_open,
         total_open_last_7days,
         total_open_last_14days,
