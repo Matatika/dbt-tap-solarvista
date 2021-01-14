@@ -18,7 +18,7 @@ with daily_stats as (
 		sum(first_fix_hours) as first_fix_hours,
 		sum(final_fix_hours) as final_fix_hours,
 
-        -- Calculate the total rolling open work orders on this report_date
+        -- Total rolling open work orders on this report_date
         (select count(*)
             from {{ ref('vw_project_sla') }} p
             where p.createdon::date <= vps.report_date
@@ -32,19 +32,27 @@ with daily_stats as (
                     and p2.is_open = 1)
         ) as total_open,
 
-        -- Calculate the number of work orders closed on this report_date
+        -- Total work orders closed on this report_date
         (select count(*)
             from {{ ref('vw_project_sla') }} p
             where p.closedon::date = vps.report_date
             and p.customer_id = vps.customer_id
         ) as total_closed,
 
-        -- Calculate the number of work orders attended on this report_date
+        -- Total work orders first attended on this report_date
         (select count(*)
             from {{ ref('vw_project_sla') }} p
             where p.preworking_timestamp::date = vps.report_date
             and p.customer_id = vps.customer_id
-        ) as total_attended
+        ) as total_attended,
+
+        -- Total work orders that are to be included in response sla calculation on this report_date
+        (select count(*)
+            from {{ ref('vw_project_sla') }} p
+            where p.createdon::date = vps.report_date
+            and p.customer_id = vps.customer_id
+            and p.appliedresponsesla is not null
+        ) as total_with_response_sla
 
     from {{ ref('vw_project_sla') }} vps
     group by report_date, report_year, report_month, report_day, customer_id
@@ -66,6 +74,7 @@ aggregations as (
         sum(total_projects) as total_opened,
         sum(total_closed) as total_closed,
         sum(total_attended) as total_attended,
+        sum(total_with_response_sla) as total_with_response_sla,
 
         --
         -- These aged / rolling totals are not correct, they are meant to be the number open older than 14 days on the report_date
@@ -93,7 +102,7 @@ aggregations as (
         -- response SLA aggregations
         sum(response_within_sla) as total_response_within_sla,
         round( avg(response_hours)::numeric, 1) as avg_first_response_hours,
-        round( ((sum(response_within_sla) / NULLIF(sum(total_projects), 0)) * 100)::numeric, 2) 
+        round( ((sum(response_within_sla) / NULLIF(sum(total_with_response_sla), 0)) * 100)::numeric, 2) 
             as response_sla_percent,
         -- first fix SLA aggregations
         sum(first_fix_within_sla) as total_first_fix_within_sla,
@@ -139,6 +148,7 @@ daily_projects_stats as (
         total_open,
         total_closed,
         total_attended,
+        total_with_response_sla,
         total_rolling_open,
         total_open_last_7days,
         total_open_last_14days,
