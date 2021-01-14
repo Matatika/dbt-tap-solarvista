@@ -151,6 +151,18 @@ FROM (
 ) AS t2
 INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
 ),
+workitems_reactivated as (
+--Sql to retrieve the earliest reactivation work item date
+select wi.project_id, wi.created_on
+FROM (
+    select wi.project_id, Min(wi.created_on) AS MinDate
+    from workitems wi 
+    where tags ? 'Reactivation' 
+    GROUP BY wi.project_id
+) AS t2
+INNER JOIN workitems wi ON wi.project_id = t2.project_id AND wi.created_on = t2.MinDate
+),
+
 project_dates as (
     select distinct
         projects.reference as project_id,
@@ -178,6 +190,7 @@ project_dates as (
 --        min(workitem_stages.travellingto_timestamp) as travellingto_timestamp,  
 --        min(workitem_stages.unassigned_timestamp) as unassigned_timestamp,  
 --        min(workitem_stages.working_timestamp) as working_timestamp,
+        min(workitems_reactivated.created_on) as reactivated_timestamp,
 
         -- Used to calculate SLAs
         (case
@@ -217,6 +230,7 @@ project_dates as (
     left join workitems_travellingto using (work_item_id) 
     left join workitems_unassigned using (work_item_id)
     left join workitems_working using (work_item_id)
+    left join workitems_reactivated using (project_id)
     group by projects.reference
 ),
 
@@ -252,6 +266,7 @@ project_states as (
 --        min(travellingto_timestamp) as travellingto_timestamp,  
 --        min(unassigned_timestamp) as unassigned_timestamp,  
 --        min(working_timestamp) as working_timestamp,
+        min(reactivated_timestamp) as reactivated_timestamp,
 
         (case
              -- Use PreWorking time as first response or closed time
@@ -314,6 +329,7 @@ stats as (
 --        min(travellingto_timestamp) as travellingto_timestamp,  
 --        min(unassigned_timestamp) as unassigned_timestamp,  
 --        min(working_timestamp) as working_timestamp,
+        min(reactivated_timestamp) as reactivated_timestamp,
 
         min(is_open) as is_open,
         min(is_closed) as is_closed,
@@ -394,6 +410,7 @@ final as (
 --      travellingto_timestamp,  
 --      unassigned_timestamp,  
 --      as working_timestamp,
+        reactivated_timestamp,
 
         is_open,
         is_closed,

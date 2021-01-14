@@ -49,7 +49,8 @@ fact_workitem as (
 
         --all other attributes from workitem stage table
         workitems.current_workflow_stage_type as current_stage,
-        workitems.is_complete,
+        workitems.is_completed,
+        workitems.tags,
         workitems.properties_operationalstatus as operationalstatus,
         workitems.properties_model as model,	
         workitems.properties_fixduedate as fixduedate,	
