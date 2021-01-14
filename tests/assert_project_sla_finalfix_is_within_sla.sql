@@ -6,5 +6,5 @@ select
     project_id,
     response_within_sla
 from {{ ref('vw_project_sla' )}}
-where project_id = '74768324'
+where project_id = '74667907'
 and final_fix_within_sla = 0
