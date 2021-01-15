@@ -5,6 +5,13 @@
 -- Expect equal to total number of projects
 select
     project_id,
+    0
+from {{ ref('vw_project_sla' )}}
+where is_closed is null
+or is_open is null
+union
+select
+    project_id,
     sum(is_open) + sum(is_closed) as total_open_close
 from {{ ref('vw_project_sla' )}}
 group by 1
