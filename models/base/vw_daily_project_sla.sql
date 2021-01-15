@@ -1,12 +1,30 @@
 {{ config(materialized='table') }}
 
-with daily_stats as (
+-- ensure a row is produced for every customer on every report date
+-- even when there are no projects for some customers
+with report_dates as (
+    select distinct report_date
+    from {{ ref('vw_project_sla') }}
+    group by report_date
+),
+
+customers_report_dates as (
+	select reference, report_date
+	from report_dates
+	cross join {{ ref('dim_customer') }} c
+),
+
+project_slas as (
+     select * from {{ ref('vw_project_sla') }}
+),
+
+daily_stats as (
     select
-        report_date,
+        crds.report_date,
         report_year,
         report_month,
         report_day,
-        customer_id,
+        crds.reference as customer_id,
 
         -- basic aggregations
         sum(total_projects) as total_projects,
@@ -21,41 +39,44 @@ with daily_stats as (
         -- Total rolling open work orders on this report_date
         (select count(*)
             from {{ ref('vw_project_sla') }} p
-            where p.createdon::date <= vps.report_date
-            and p.final_fix::date > vps.report_date
-            and p.customer_id = vps.customer_id
+            where p.createdon::date <= crds.report_date
+            and p.final_fix::date > crds.report_date
+            and p.customer_id = crds.reference
             or p.project_id in 
-                (select project_id 
+                (select p2.project_id 
                     from {{ ref('vw_project_sla') }} p2
-                    where p2.createdon::date <= vps.report_date
-                    and p2.customer_id = vps.customer_id
+                    where p2.createdon::date <= crds.report_date
+                    and p2.customer_id = crds.reference
                     and p2.is_open = 1)
         ) as total_open,
 
         -- Total work orders closed on this report_date
         (select count(*)
             from {{ ref('vw_project_sla') }} p
-            where p.closedon::date = vps.report_date
-            and p.customer_id = vps.customer_id
+            where p.closedon::date = crds.report_date
+            and p.customer_id = crds.reference
         ) as total_closed,
 
         -- Total work orders first attended on this report_date
         (select count(*)
             from {{ ref('vw_project_sla') }} p
-            where p.preworking_timestamp::date = vps.report_date
-            and p.customer_id = vps.customer_id
+            where p.preworking_timestamp::date = crds.report_date
+            and p.customer_id = crds.reference
         ) as total_attended,
 
         -- Total work orders that are to be included in response sla calculation on this report_date
         (select count(*)
             from {{ ref('vw_project_sla') }} p
-            where p.createdon::date = vps.report_date
-            and p.customer_id = vps.customer_id
+            where p.createdon::date = crds.report_date
+            and p.customer_id = crds.reference
             and p.appliedresponsesla is not null
         ) as total_with_response_sla
 
-    from {{ ref('vw_project_sla') }} vps
-    group by report_date, report_year, report_month, report_day, customer_id
+    from customers_report_dates crds
+    left join project_slas vps 
+        on crds.report_date = vps.report_date
+        and crds.reference = vps.customer_id
+    group by crds.reference, crds.report_date, report_year, report_month, report_day
     order by report_year ASC, report_month ASC, report_day ASC
 ),
 
