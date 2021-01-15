@@ -4,7 +4,13 @@
 -- Expect is_refix to be equal to 1 (returning results is a test failure)
 select
     project_id,
-    response_within_sla
+    is_refix
+from {{ ref('vw_project_sla' )}}
+where is_refix is null
+union
+select
+    project_id,
+    is_refix
 from {{ ref('vw_project_sla' )}}
 where project_id = '74864898'
 and is_refix = 0
@@ -14,4 +20,4 @@ select
     is_refix
 from {{ ref('vw_project_sla' )}} vp
 where reactivated_timestamp is not null
-and is_refix != 1
+and is_refix = 0

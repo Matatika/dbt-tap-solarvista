@@ -358,7 +358,7 @@ stats as (
             when {{ dbt_utils.datediff('min(fixdue_date)', 'min(finalfix_date)', 'hour') }} <= 0 then 1 else 0 
          end) as final_fix_within_sla,
 		(case 
-            when min(finalfix_date) > min(firstfix_date) then 1 
+            when min(reactivated_timestamp) is not null then 1 else 0
          end) as is_refix
     from project_states
     where project_id is not null
