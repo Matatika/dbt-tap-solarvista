@@ -9,13 +9,20 @@ target-path: "target"      # path for compiled code
 clean-targets: ["target"]  # directories removed by the clean task
 test-paths: ["tests"]       # where to store test results
 data-paths: ["data"]       # load CSVs from this directory with `dbt seed`
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
 
 models:
   tap_solarvista:
     base:
       materialized: table
-    transform:
-      materialized: table
 
     vars:
-      schema: cityfm              # the schema where the raw Solarvista tables are located
+      schema: "{{ env_var('TARGET_POSTGRES_SCHEMA') }}"              # the schema where the raw Solarvista tables are located
+      
+snapshots:
+  tap_solarvista:
+    target_database: "{{ env_var('TARGET_POSTGRES_DBNAME') }}"
+    target_schema: "{{ env_var('TARGET_POSTGRES_SCHEMA') }}"
+
+    
