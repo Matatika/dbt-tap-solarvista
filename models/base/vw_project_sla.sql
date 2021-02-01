@@ -356,12 +356,16 @@ stats as (
 		(case 
             when min(is_cancelled) = 1 then 1 
             when min(fixdue_date) is null then 1 
-            when {{ dbt_utils.datediff('min(fixdue_date)', 'min(finalfix_date)', 'hour') }} <= 0 then 1 else 0 
+            when min(finalfix_date) is null and {{ dbt_utils.datediff('min(fixdue_date)', 'now()', 'hour') }} <= 0 then 1
+            when {{ dbt_utils.datediff('min(fixdue_date)', 'min(finalfix_date)', 'hour') }} <= 0 then 1
+            else 0
          end) as final_fix_within_sla,
 		(case 
             when min(is_cancelled) = 1 then 0 
             when min(fixdue_date) is null then 0 
-            when {{ dbt_utils.datediff('min(fixdue_date)', 'min(finalfix_date)', 'hour') }} > 0 then 1 else 0 
+            when min(finalfix_date) is null and {{ dbt_utils.datediff('min(fixdue_date)', 'now()', 'hour') }} > 0 then 1
+            when {{ dbt_utils.datediff('min(fixdue_date)', 'min(finalfix_date)', 'hour') }} > 0 then 1
+            else 0
          end) as final_fix_missed_sla,
 		(case 
             when min(reactivated_timestamp) is null then 1 else 0
