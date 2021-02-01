@@ -364,6 +364,9 @@ stats as (
             when {{ dbt_utils.datediff('min(fixdue_date)', 'min(finalfix_date)', 'hour') }} > 0 then 1 else 0 
          end) as final_fix_missed_sla,
 		(case 
+            when min(reactivated_timestamp) is null then 1 else 0
+         end) as is_firstfix,
+		(case 
             when min(reactivated_timestamp) is not null then 1 else 0
          end) as is_refix
     from project_states
@@ -421,10 +424,11 @@ final as (
         is_open,
         is_closed,
         is_cancelled,
+        is_refix,
+        is_firstfix,
         first_response,  
 		first_fix,
 		final_fix,
-        is_refix,
 
         response_hours,
         response_within_sla,
