@@ -13,16 +13,9 @@ macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
 models:
-  tap_solarvista:
-    base:
-      materialized: table
-
     vars:
       schema: "{{ env_var('TARGET_POSTGRES_SCHEMA') }}"              # the schema where the raw Solarvista tables are located
-      
-snapshots:
-  tap_solarvista:
-    target_database: "{{ env_var('TARGET_POSTGRES_DBNAME') }}"
-    target_schema: "{{ env_var('TARGET_POSTGRES_SCHEMA') }}"
 
-    
+snapshots:
+    vars:
+      schema: "{{ env_var('TARGET_POSTGRES_SCHEMA') }}"              # the schema where the raw Solarvista tables are located
