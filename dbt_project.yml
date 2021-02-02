@@ -1,6 +1,8 @@
 name: 'tap_solarvista'
 version: '0.0.1'
 
+config-version: 2
+
 profile: local
 
 source-paths: ["models"]   # paths with source code to compile
@@ -12,10 +14,5 @@ data-paths: ["data"]       # load CSVs from this directory with `dbt seed`
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
-models:
-    vars:
-      schema: "{{ env_var('TARGET_POSTGRES_SCHEMA') }}"              # the schema where the raw Solarvista tables are located
-
-snapshots:
-    vars:
-      schema: "{{ env_var('TARGET_POSTGRES_SCHEMA') }}"              # the schema where the raw Solarvista tables are located
+vars:
+  schema: "{{ env_var('TARGET_POSTGRES_SCHEMA') }}"              # the schema where the raw Solarvista tables are located
