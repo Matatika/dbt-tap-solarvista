@@ -2,7 +2,7 @@
 
 {{
     config(
-      target_schema=generate_schema_name('snapshots'),
+      target_schema=var('schema'),
       unique_key='reference',
       strategy='check',      
       check_cols=['status', 'createdon', 'closedon'],
