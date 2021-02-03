@@ -66,6 +66,13 @@ daily_stats as (
             and p.customer_id = crds.reference
         ) as total_attended,
 
+        -- Total work orders recalled report_date
+        (select count(*)
+            from project_slas p
+            where p.reactivated_timestamp::date = crds.report_date
+            and p.customer_id = crds.reference
+        ) as total_reactivated,
+
         -- Total work orders that are to be included in response sla calculation on this report_date
         (select count(*)
             from project_slas p
@@ -97,6 +104,7 @@ aggregations as (
         sum(total_projects) as total_opened,
         sum(total_closed) as total_closed,
         sum(total_attended) as total_attended,
+        sum(total_reactivated) as total_reactivated,
         sum(total_with_response_sla) as total_with_response_sla,
 
         --
@@ -171,6 +179,7 @@ daily_projects_stats as (
         total_open,
         total_closed,
         total_attended,
+        total_reactivated,
         total_with_response_sla,
         total_rolling_open,
         total_open_last_7days,
