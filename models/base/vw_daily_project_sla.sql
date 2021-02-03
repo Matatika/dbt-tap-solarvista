@@ -40,13 +40,13 @@ daily_stats as (
 
         -- Total rolling open work orders on this report_date
         (select count(*)
-            from {{ ref('vw_project_sla') }} p
+            from project_slas p
             where p.createdon::date <= crds.report_date
             and p.final_fix::date > crds.report_date
             and p.customer_id = crds.reference
             or p.project_id in 
                 (select p2.project_id 
-                    from {{ ref('vw_project_sla') }} p2
+                    from project_slas p2
                     where p2.createdon::date <= crds.report_date
                     and p2.customer_id = crds.reference
                     and p2.is_open = 1)
@@ -54,21 +54,21 @@ daily_stats as (
 
         -- Total work orders closed on this report_date
         (select count(*)
-            from {{ ref('vw_project_sla') }} p
+            from project_slas p
             where p.closedon::date = crds.report_date
             and p.customer_id = crds.reference
         ) as total_closed,
 
         -- Total work orders first attended on this report_date
         (select count(*)
-            from {{ ref('vw_project_sla') }} p
+            from project_slas p
             where p.preworking_timestamp::date = crds.report_date
             and p.customer_id = crds.reference
         ) as total_attended,
 
         -- Total work orders that are to be included in response sla calculation on this report_date
         (select count(*)
-            from {{ ref('vw_project_sla') }} p
+            from project_slas p
             where p.createdon::date = crds.report_date
             and p.customer_id = crds.reference
             and p.appliedresponsesla is not null
