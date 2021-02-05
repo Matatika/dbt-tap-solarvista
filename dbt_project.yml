@@ -18,4 +18,4 @@ models:
       materialized: table
 
     vars:
-      schema: cityfm              # the schema where the raw Solarvista tables are located
+      schema: "{{ env_var('TARGET_POSTGRES_SCHEMA') }}"              # the schema where the source and target Solarvista tables are located
