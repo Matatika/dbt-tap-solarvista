@@ -1,29 +1,139 @@
 {{ config(materialized='table') }}
 
+--
+-- This view is able to answer questions related to how users acted on workitems.
+-- e.g. Did a user closed a given work item?
+-- How many work items did a user work on?
+--
 with workitem_facts as (
-    select
-        assigned_user_id,
-        min(created_on) as first_workitem_date,
-        max(created_on) as most_recent_workitem_date,
-        sum(duration_hours) as total_duration_hours,
-        sum(workitem_count) as total_workitems
-    from {{ ref('fact_workitem') }}
-    group by assigned_user_id
+    select * from {{ ref('fact_workitem') }}
 ),
 
-users as (
+workitems_history as (
+    select * from {{ ref('fact_workitem_history') }}
+),
+
+workitems_preworking as (
+    -- Sql to retrieve the work item attended stage by a specific user
+    select ht.work_item_id, ht.stage_transition_transitioned_by_user_id, ht.stage_transition_received_at
+    FROM (
+        Select ht.work_item_id, ht.stage_transition_transitioned_by_user_id, Min(ht.stage_transition_received_at) AS MinDate
+        from workitems_history ht 
+        where ht.stage_stage_type = 'PreWorking' 
+        GROUP BY ht.work_item_id, ht.stage_transition_transitioned_by_user_id
+    ) AS t2
+    INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id
+        AND ht.stage_transition_received_at= t2.MinDate
+),
+
+workitems_remoteclosed as (
+    -- Sql to retrieve the work item remote closed stage by a specific user
+    select ht.work_item_id, ht.stage_transition_transitioned_by_user_id, ht.stage_transition_received_at
+    FROM (
+        Select ht.work_item_id, ht.stage_transition_transitioned_by_user_id, Min(ht.stage_transition_received_at) AS MinDate
+        from workitems_history ht 
+        where ht.stage_stage_type = 'RemoteClosed' 
+        GROUP BY ht.work_item_id, ht.stage_transition_transitioned_by_user_id
+    ) AS t2
+    INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id
+        AND ht.stage_transition_received_at= t2.MinDate
+),
+
+assigned_users as (
     select * from {{ ref('dim_user') }}
 ),
 
-stats_user_workitems as (
+attended_users as (
+    select * from {{ ref('dim_user') }}
+),
+
+remoteclosed_users as (
+    select * from {{ ref('dim_user') }}
+),
+
+customers as (
+     select distinct * from {{ ref('dim_customer') }}
+),
+
+sites as (
+     select distinct * from {{ ref('dim_site') }}
+),
+
+territories as (
+     select distinct * from {{ ref('dim_territory') }}
+),
+
+dates as (
+    select * from {{ ref('dim_date') }}
+),
+
+stats as (
     select
-        users.user_id,
-        users.display_name,
-        workitem_facts.first_workitem_date,
-        workitem_facts.most_recent_workitem_date,
-        workitem_facts.total_duration_hours,
-        coalesce(workitem_facts.total_workitems, 0) as total_workitems
-    from users
-        left join workitem_facts on users.user_id = workitem_facts.assigned_user_id
+        work_item_id
+        ,assigned_user_id
+        ,created_on::date as report_date
+        ,EXTRACT(YEAR FROM created_on)::integer as report_year
+        ,EXTRACT(MONTH FROM created_on)::integer as report_month
+        ,EXTRACT(DAY FROM created_on)::integer as report_day
+
+        -- keys
+        ,territory_sk
+        ,site_sk
+        ,customer_sk
+        
+        -- users who performed each stage
+        ,workitems_preworking.stage_transition_transitioned_by_user_id as preworking_by_user_id
+        ,workitems_remoteclosed.stage_transition_transitioned_by_user_id as remoteclosed_by_user_id
+
+        --
+        -- metrics
+        --
+        ,workitem_facts.workitem_count as workitem_count
+        ,workitem_facts.duration_hours as duration_hours
+    from workitem_facts
+    left join workitems_preworking using (work_item_id)
+    left join workitems_remoteclosed using (work_item_id)
+),
+
+final as (
+    select
+        work_item_id
+        ,report_date
+        ,report_year
+        ,report_month
+        ,report_day
+
+        -- dimensions
+        ,dates.day_of_month
+        ,dates.day_of_year
+        ,dates.day_of_week
+        ,dates.day_of_week_name
+        ,territories.reference as territory_id
+        ,territories.name as territory_name
+        ,sites.reference as site_id
+        ,sites.name as site_name
+        ,customers.reference as customer_id
+        ,customers.name as customer_name
+        ,assigned_users.user_id as assigned_user_id
+        ,assigned_users.display_name as assigned_user_name
+        ,attended_users.user_id as attended_user_id
+        ,attended_users.display_name as attended_user_name
+        ,remoteclosed_users.user_id as remoteclosed_user_id
+        ,remoteclosed_users.display_name as remoteclosed_user_name
+
+        --
+        -- metrics
+        --
+        ,workitem_count
+        ,duration_hours
+
+    from stats
+        left join sites on sites.site_sk = stats.site_sk
+        left join territories on territories.territory_sk = stats.territory_sk
+        left join customers on customers.customer_sk = stats.customer_sk
+        left join assigned_users on assigned_users.user_id = stats.assigned_user_id
+        left join attended_users on attended_users.user_id = stats.preworking_by_user_id
+        left join remoteclosed_users on remoteclosed_users.user_id = stats.remoteclosed_by_user_id
+        left join dates on dates.date_day = stats.report_date
 )
-select * from stats_user_workitems
+select * from final
