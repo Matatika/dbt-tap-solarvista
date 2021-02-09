@@ -14,5 +14,12 @@ data-paths: ["data"]       # load CSVs from this directory with `dbt seed`
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
+models:
+  tap_solarvista:
+    base:
+      materialized: table
+    transform:
+      materialized: table
+      
 vars:
   schema: "{{ env_var('TARGET_POSTGRES_SCHEMA') }}"              # the schema where the raw Solarvista tables are located
