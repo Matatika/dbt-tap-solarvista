@@ -57,7 +57,8 @@ fact_workitem as (
         workitems.schedule_start_time,	
         workitems.schedule_duration_minutes,	
         workitems.properties_operationalstatus as operationalstatus,
-        workitems.properties_model as model,	
+        workitems.properties_model as model,
+        workitems.properties_source as source,
         workitems.properties_fixduedate as fixduedate,	
         workitems.properties_responseduedate as responseduedate,	    
         
