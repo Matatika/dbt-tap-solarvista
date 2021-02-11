@@ -162,14 +162,6 @@ FROM (
 ) AS t2
 INNER JOIN workitems wi ON wi.project_id = t2.project_id AND wi.created_on = t2.MinDate
 ),
-workitems_appliedfullfixsla as (
-    -- sql to extract the full fix sla from a work items tags
-    select work_item_id, split_part(replace(tagss::text, '"', ''), ' ', 1) as appliedfullfixsla
-    from
-        workitems wi,
-        jsonb_array_elements(wi.tags) as tagss
-    where tagss::text like '%Fix%'
-),
 
 project_dates as (
     select distinct
@@ -181,6 +173,7 @@ project_dates as (
 	    min(projects.status) as project_status,
         min(projects.appliedresponsesla) as appliedresponsesla,
         min(projects.responseduedate) as responsedue_date,
+        min(projects.appliedfixsla) as appliedfixsla,
         min(projects.fixduedate) as fixdue_date,
         workitems.count as total_workitems,
 
@@ -199,7 +192,6 @@ project_dates as (
 --        min(workitem_stages.unassigned_timestamp) as unassigned_timestamp,  
 --        min(workitem_stages.working_timestamp) as working_timestamp,
         min(workitems_reactivated.created_on) as reactivated_timestamp,
-        min(workitems_appliedfullfixsla.appliedfullfixsla) as appliedfullfixsla,
 
         -- Used to calculate SLAs
         (case
@@ -240,7 +232,6 @@ project_dates as (
     left join workitems_unassigned using (work_item_id)
     left join workitems_working using (work_item_id)
     left join workitems_reactivated using (project_id)
-    left join workitems_appliedfullfixsla using (work_item_id)
     group by projects.reference
 ),
 
@@ -259,7 +250,7 @@ project_states as (
         min(closedon) as closedon,
         min(appliedresponsesla) as appliedresponsesla,
         min(responsedue_date) as responsedue_date,
-        min(appliedfullfixsla) as appliedfullfixsla,
+        min(appliedfixsla) as appliedfixsla,
         min(fixdue_date) as fixdue_date,
         min(total_workitems) as total_workitems,
 
@@ -323,7 +314,7 @@ stats as (
         min(closedon) as closedon,
         min(appliedresponsesla) as appliedresponsesla,
         min(responsedue_date) as responsedue_date,
-        min(appliedfullfixsla) as appliedfullfixsla,
+        min(appliedfixsla) as appliedfixsla,
         min(fixdue_date) as fixdue_date,
         count(project_id) as total_projects,
 		sum(total_workitems) as total_workitems,
@@ -418,7 +409,7 @@ final as (
         closedon,
         appliedresponsesla,
         responsedue_date,
-        appliedfullfixsla,
+        appliedfixsla,
         fixdue_date,
         total_projects,
 		total_workitems,
