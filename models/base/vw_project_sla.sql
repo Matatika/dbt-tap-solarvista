@@ -171,11 +171,13 @@ project_dates as (
         min(workitems.territory_sk) as territory_sk,
 	    min(projects.project_type) as project_type,
 	    min(projects.status) as project_status,
+	    min(projects.problemtype) as problemtype,
         min(projects.appliedresponsesla) as appliedresponsesla,
         min(projects.responseduedate) as responsedue_date,
         min(projects.appliedfixsla) as appliedfixsla,
         min(projects.fixduedate) as fixdue_date,
         workitems.count as total_workitems,
+        min(workitems.schedule_start_date) as schedule_start_date,
 
         -- dates from workitems
         min(workitems_accepted.stage_transition_received_at) as accepted_timestamp,
@@ -246,6 +248,7 @@ project_states as (
 
 	    min(project_type) as project_type,
 	    min(project_status) as project_status,
+        min(problemtype) as problemtype,
         min(createdon) as createdon,
         min(closedon) as closedon,
         min(appliedresponsesla) as appliedresponsesla,
@@ -253,6 +256,7 @@ project_states as (
         min(appliedfixsla) as appliedfixsla,
         min(fixdue_date) as fixdue_date,
         min(total_workitems) as total_workitems,
+        min(schedule_start_date) as schedule_start_date,
 
         -- dates from workitems
         min(accepted_timestamp) as accepted_timestamp,
@@ -310,6 +314,7 @@ stats as (
 
 	    min(project_type) as project_type,
 	    min(project_status) as project_status,
+        min(problemtype) as problemtype,
         min(createdon) as createdon,
         min(closedon) as closedon,
         min(appliedresponsesla) as appliedresponsesla,
@@ -318,6 +323,7 @@ stats as (
         min(fixdue_date) as fixdue_date,
         count(project_id) as total_projects,
 		sum(total_workitems) as total_workitems,
+        min(schedule_start_date) as schedule_start_date,
 
         min(accepted_timestamp) as accepted_timestamp,
         min(closed_timestamp) as closed_timestamp,  
@@ -405,6 +411,7 @@ final as (
 
 	    project_type,
 	    project_status,
+        problemtype,
         createdon,
         closedon,
         appliedresponsesla,
@@ -413,6 +420,7 @@ final as (
         fixdue_date,
         total_projects,
 		total_workitems,
+        schedule_start_date,
 
         accepted_timestamp,
         closed_timestamp,  

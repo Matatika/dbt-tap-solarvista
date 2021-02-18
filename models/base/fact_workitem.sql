@@ -54,6 +54,7 @@ fact_workitem as (
         workitems.current_workflow_stage_type as current_stage,
         workitems.is_completed,
         workitems.tags,
+        workitems.schedule_start_time::date as schedule_start_date,	
         workitems.schedule_start_time,	
         workitems.schedule_duration_minutes,	
         workitems.properties_operationalstatus as operationalstatus,
