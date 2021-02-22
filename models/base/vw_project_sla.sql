@@ -174,6 +174,7 @@ workitems_appliedfullfixsla as (
 project_dates as (
     select distinct
         projects.reference as project_id,
+        min(projects.project_sk) as project_sk,
         min(workitems.customer_sk) as customer_sk,
         min(workitems.site_sk) as site_sk,
         min(workitems.territory_sk) as territory_sk,
@@ -249,6 +250,7 @@ project_states as (
 
         -- keys
         project_id,
+        min(project_sk) as project_sk,
         min(customer_sk) as customer_sk,
         min(site_sk) as site_sk,
         min(territory_sk) as territory_sk,
@@ -312,6 +314,7 @@ stats as (
         min(customer_sk) as customer_sk,
         min(site_sk) as site_sk,
         min(territory_sk) as territory_sk,
+        min(project_sk) as project_sk,
         createdon::date as report_date,
         EXTRACT(YEAR FROM createdon)::integer as report_year,
         EXTRACT(MONTH FROM createdon)::integer as report_month,
@@ -411,15 +414,11 @@ final as (
         report_year,
         report_month,
         report_day,
+	    
+        stats.createdon,
+        stats.closedon,
 
-	    project_type,
-	    project_status,
-        createdon,
-        closedon,
-        appliedresponsesla,
-        responsedue_date,
-        appliedfullfixsla,
-        fixdue_date,
+        schedule_start_date,
         total_projects,
 		total_workitems,
 
@@ -466,7 +465,16 @@ final as (
         sites.reference as site_id,
         sites.name as site_name,
         customers.reference as customer_id,
-        customers.name as customer_name
+        customers.name as customer_name,
+        projects.appliedfixsla,
+        projects.appliedresponsesla,
+        projects.project_type,
+        projects.problemtype,
+        projects.status as project_status,
+        projects.responseduedate as responsedue_date,
+        projects.fixduedate as fixdue_date,
+        projects.source as source
+
 
 
     from stats
@@ -474,5 +482,6 @@ final as (
         left outer join customers on customers.customer_sk = stats.customer_sk
         left outer join sites on sites.site_sk = stats.site_sk
         left outer join territories on territories.territory_sk = stats.territory_sk
+        left outer join projects on projects.project_sk = stats.project_sk
 )
 select * from final
