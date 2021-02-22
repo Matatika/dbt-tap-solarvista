@@ -162,14 +162,6 @@ FROM (
 ) AS t2
 INNER JOIN workitems wi ON wi.project_id = t2.project_id AND wi.created_on = t2.MinDate
 ),
-workitems_appliedfullfixsla as (
-    -- sql to extract the full fix sla from a work items tags
-    select work_item_id, split_part(replace(tagss::text, '"', ''), ' ', 1) as appliedfullfixsla
-    from
-        workitems wi,
-        jsonb_array_elements(wi.tags) as tagss
-    where tagss::text like '%Fix%'
-),
 
 project_dates as (
     select distinct
@@ -180,10 +172,13 @@ project_dates as (
         min(workitems.territory_sk) as territory_sk,
 	    min(projects.project_type) as project_type,
 	    min(projects.status) as project_status,
+	    min(projects.problemtype) as problemtype,
         min(projects.appliedresponsesla) as appliedresponsesla,
         min(projects.responseduedate) as responsedue_date,
+        min(projects.appliedfixsla) as appliedfixsla,
         min(projects.fixduedate) as fixdue_date,
         workitems.count as total_workitems,
+        min(workitems.schedule_start_date) as schedule_start_date,
 
         -- dates from workitems
         min(workitems_accepted.stage_transition_received_at) as accepted_timestamp,
@@ -200,7 +195,6 @@ project_dates as (
 --        min(workitem_stages.unassigned_timestamp) as unassigned_timestamp,  
 --        min(workitem_stages.working_timestamp) as working_timestamp,
         min(workitems_reactivated.created_on) as reactivated_timestamp,
-        min(workitems_appliedfullfixsla.appliedfullfixsla) as appliedfullfixsla,
 
         -- Used to calculate SLAs
         (case
@@ -241,7 +235,6 @@ project_dates as (
     left join workitems_unassigned using (work_item_id)
     left join workitems_working using (work_item_id)
     left join workitems_reactivated using (project_id)
-    left join workitems_appliedfullfixsla using (work_item_id)
     group by projects.reference
 ),
 
@@ -257,13 +250,15 @@ project_states as (
 
 	    min(project_type) as project_type,
 	    min(project_status) as project_status,
+        min(problemtype) as problemtype,
         min(createdon) as createdon,
         min(closedon) as closedon,
         min(appliedresponsesla) as appliedresponsesla,
         min(responsedue_date) as responsedue_date,
-        min(appliedfullfixsla) as appliedfullfixsla,
+        min(appliedfixsla) as appliedfixsla,
         min(fixdue_date) as fixdue_date,
         min(total_workitems) as total_workitems,
+        min(schedule_start_date) as schedule_start_date,
 
         -- dates from workitems
         min(accepted_timestamp) as accepted_timestamp,
@@ -322,14 +317,16 @@ stats as (
 
 	    min(project_type) as project_type,
 	    min(project_status) as project_status,
+        min(problemtype) as problemtype,
         min(createdon) as createdon,
         min(closedon) as closedon,
         min(appliedresponsesla) as appliedresponsesla,
         min(responsedue_date) as responsedue_date,
-        min(appliedfullfixsla) as appliedfullfixsla,
+        min(appliedfixsla) as appliedfixsla,
         min(fixdue_date) as fixdue_date,
         count(project_id) as total_projects,
 		sum(total_workitems) as total_workitems,
+        min(schedule_start_date) as schedule_start_date,
 
         min(accepted_timestamp) as accepted_timestamp,
         min(closed_timestamp) as closed_timestamp,  

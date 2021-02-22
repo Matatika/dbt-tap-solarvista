@@ -36,10 +36,6 @@ fact_workitem as (
         EXTRACT(YEAR FROM created_on)::integer as report_year,
         EXTRACT(MONTH FROM created_on)::integer as report_month,
         EXTRACT(DAY FROM created_on)::integer as report_day,
-        dates.day_of_month,
-        dates.day_of_year,
-        dates.day_of_week,
-        dates.day_of_week_name,
 
         --fact table will only contain SCD surrogate keys
         --below keys needs to be removed from fact and retrieved in reporting views later     
@@ -58,10 +54,12 @@ fact_workitem as (
         workitems.current_workflow_stage_type as current_stage,
         workitems.is_completed,
         workitems.tags,
+        workitems.schedule_start_time::date as schedule_start_date,	
         workitems.schedule_start_time,	
         workitems.schedule_duration_minutes,	
         workitems.properties_operationalstatus as operationalstatus,
-        workitems.properties_model as model,	
+        workitems.properties_model as model,
+        workitems.properties_source as source,
         workitems.properties_fixduedate as fixduedate,	
         workitems.properties_responseduedate as responseduedate,	    
         
@@ -84,6 +82,5 @@ fact_workitem as (
     left join territories on territories.reference = workitems.properties_territories_id
     left join sites on sites.reference = workitems.properties_site_id
     left join customers on customers.reference = workitems.properties_customer_id
-    left join dates on dates.date_day = workitems.created_on::date
 )
 select * from fact_workitem

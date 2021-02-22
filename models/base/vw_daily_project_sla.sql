@@ -16,8 +16,9 @@ customers_report_dates as (
 
 project_slas as (
      select * from {{ ref('vw_project_sla') }}
-     where responsedue_date is not NULL
-     or fixdue_date is not NULL
+-- this criteria will select only verisae projects for the daily view
+--     where responsedue_date is not NULL
+--     or fixdue_date is not NULL
 ),
 
 daily_stats as (

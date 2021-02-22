@@ -27,7 +27,7 @@ sources:
           - name: status
             tests:
               - accepted_values:
-                  values: ['Active', 'Closed', 'Cancelled', 'Pending Acceptance']
+                  values: ['Active', 'Closed', 'Cancelled', 'Discarded', 'Pending Acceptance']
 
       - name: workitem_stream
         columns:
