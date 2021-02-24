@@ -8,7 +8,7 @@ select
 from {{ ref('vw_project_sla' )}}
 where appliedfixsla IS NOT NULL
 and fixdue_date IS NULL
-and report_date > '2021-02-10'::date
+and report_date > '2021-02-12'::date
 and project_status != 'Cancelled'
 union
 select
@@ -20,7 +20,7 @@ where project_id in (
     where tags::text like '%Fix%'
 )
 and appliedfixsla IS NULL
-and report_date > '2021-02-10'::date
+and report_date > '2021-02-12'::date
 union
 select
     project_id, appliedfixsla
