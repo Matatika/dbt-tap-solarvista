@@ -176,7 +176,7 @@ project_dates as (
         min(projects.responseduedate) as responsedue_date,
         min(projects.appliedfixsla) as appliedfixsla,
         min(projects.fixduedate) as fixdue_date,
-        workitems.count as total_workitems,
+        count(distinct workitems.work_item_id) as total_workitems,
         min(workitems.schedule_start_date) as schedule_start_date,
 
         -- dates from workitems
@@ -197,8 +197,8 @@ project_dates as (
 
         -- Used to calculate SLAs
         (case
-             when min(workitems.created_on) is not null then min(workitems.created_on)
              when min(projects.createdon) is not null then min(projects.createdon)
+             when min(workitems.created_on) is not null then min(workitems.created_on)
 		 end) as createdon,
         (case
              when max(projects.closedon) is not null then max(projects.closedon)
