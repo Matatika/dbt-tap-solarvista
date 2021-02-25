@@ -1,3 +1,7 @@
+-- Assert that all these columns exist in vw_daily_project_sla
+-- These are the currently specific columns used by a meltano report
+-- The where causes the select to still run but return nothing
+-- So if it can't select a column it still returns an error
 select 
     vw_daily_project_sla.report_year,
     vw_daily_project_sla.report_month,
