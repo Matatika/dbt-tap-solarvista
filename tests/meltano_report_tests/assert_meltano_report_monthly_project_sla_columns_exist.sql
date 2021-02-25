@@ -1,4 +1,4 @@
--- Assert that all these columns exist in fact_workitem_history
+-- Assert that all these columns exist in vw_monthly_project_sla
 -- These are the currently specific columns used by a meltano report
 -- The where causes the select to still run but return nothing
 -- So if it can't select a column it still returns an error
