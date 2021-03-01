@@ -151,41 +151,51 @@ FROM (
 ) AS t2
 INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
 ),
+
+dates as (
+    select * from {{ ref('dim_date') }}
+),
+
 vw_workitem_stages as (
     select distinct 
-    workitems.work_item_id,
-    projects.reference,
-    projects.createdon,    
-    projects.responseduedate,
-    projects.fixduedate,
-    workitems_accepted.stage_transition_received_at as accepted_timestamp,
-    workitems_closed.stage_transition_received_at as closed_timestamp,  
-    workitems_assigned.stage_transition_received_at as assigned_timestamp,  
-    workitems_cancelled.stage_transition_received_at as cancelled_timestamp,  
-    workitems_discarded.stage_transition_received_at as discarded_timestamp,  
-    workitems_postworking.stage_transition_received_at as postworking_timestamp,  
-    workitems_preworking.stage_transition_received_at as preworking_timestamp,  
-    workitems_quickclose.stage_transition_received_at as quickclose_timestamp,  
-    workitems_remoteclosed.stage_transition_received_at as remoteclosed_timestamp,  
-    workitems_travellingfrom.stage_transition_received_at as travellingfrom_timestamp,  
-    workitems_travellingto.stage_transition_received_at as travellingto_timestamp,  
-    workitems_unassigned.stage_transition_received_at as unassigned_timestamp,  
-    workitems_working.stage_transition_received_at as working_timestamp   
-from workitems
-left join projects 
-on projects.project_sk = workitems.project_sk
-left join workitems_accepted using (work_item_id)
-left join workitems_closed using (work_item_id)
-left join workitems_assigned using (work_item_id)
-left join workitems_cancelled using (work_item_id)
-left join workitems_discarded using (work_item_id)
-left join workitems_postworking using (work_item_id)
-left join workitems_preworking using (work_item_id)
-left join workitems_quickclose using (work_item_id)
-left join workitems_remoteclosed using (work_item_id)
-left join workitems_travellingfrom using (work_item_id)
-left join workitems_travellingto using (work_item_id) 
-left join workitems_unassigned using (work_item_id)
-left join workitems_working using (work_item_id)
+        workitems.work_item_id,
+        projects.reference,
+        projects.createdon,    
+        projects.responseduedate,
+        projects.fixduedate,
+
+        dates.*,
+
+        workitems_accepted.stage_transition_received_at as accepted_timestamp,
+        workitems_closed.stage_transition_received_at as closed_timestamp,  
+        workitems_assigned.stage_transition_received_at as assigned_timestamp,  
+        workitems_cancelled.stage_transition_received_at as cancelled_timestamp,  
+        workitems_discarded.stage_transition_received_at as discarded_timestamp,  
+        workitems_postworking.stage_transition_received_at as postworking_timestamp,  
+        workitems_preworking.stage_transition_received_at as preworking_timestamp,  
+        workitems_quickclose.stage_transition_received_at as quickclose_timestamp,  
+        workitems_remoteclosed.stage_transition_received_at as remoteclosed_timestamp,  
+        workitems_travellingfrom.stage_transition_received_at as travellingfrom_timestamp,  
+        workitems_travellingto.stage_transition_received_at as travellingto_timestamp,  
+        workitems_unassigned.stage_transition_received_at as unassigned_timestamp,  
+        workitems_working.stage_transition_received_at as working_timestamp
+    from workitems
+        left join projects 
+            on projects.project_sk = workitems.project_sk
+        left outer join dates 
+            on dates.date_day = projects.createdon::date
+        left join workitems_accepted using (work_item_id)
+        left join workitems_closed using (work_item_id)
+        left join workitems_assigned using (work_item_id)
+        left join workitems_cancelled using (work_item_id)
+        left join workitems_discarded using (work_item_id)
+        left join workitems_postworking using (work_item_id)
+        left join workitems_preworking using (work_item_id)
+        left join workitems_quickclose using (work_item_id)
+        left join workitems_remoteclosed using (work_item_id)
+        left join workitems_travellingfrom using (work_item_id)
+        left join workitems_travellingto using (work_item_id) 
+        left join workitems_unassigned using (work_item_id)
+        left join workitems_working using (work_item_id)
 )
 select * from vw_workitem_stages 

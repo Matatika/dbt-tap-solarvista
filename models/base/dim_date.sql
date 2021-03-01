@@ -31,6 +31,9 @@ dates_with_prior_year_dates as (
 )
 select
     d.date_day,
+    EXTRACT(YEAR FROM d.date_day)::integer as date_year,
+    EXTRACT(MONTH FROM d.date_day)::integer as date_month_of_year,
+    EXTRACT(DAY FROM d.date_day)::integer as date_day_of_month,
     cast({{ dbt_utils.dateadd('day', -1 , 'd.date_day') }} as date) as prior_date_day,
     cast({{ dbt_utils.dateadd('day', 1 , 'd.date_day') }} as date) as next_date_day,
     d.prior_year_date_day as prior_year_date_day,
