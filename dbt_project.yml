@@ -18,8 +18,6 @@ models:
   tap_solarvista:
     base:
       materialized: table
-    transform:
-      materialized: table
       
 vars:
   schema: "{{ env_var('TARGET_POSTGRES_SCHEMA') }}"              # the schema where the raw Solarvista tables are located

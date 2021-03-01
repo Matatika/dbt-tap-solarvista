@@ -2,8 +2,8 @@ version: 2
 
 sources:
   - name: solarvista_live
-    schema: cityfm
-    description: A replica of the postgres database used to power the jaffle_shop app.
+    schema: "{{ env_var('TARGET_POSTGRES_SCHEMA') }}"
+    description: Data sync'd from Solarvista Live, and transformed into our service management models.
     tables:
       - name: customer_stream
         columns:
