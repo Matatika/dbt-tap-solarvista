@@ -57,6 +57,7 @@ fact_workitem as (
         workitems.schedule_start_time::date as schedule_start_date,	
         workitems.schedule_start_time,	
         workitems.schedule_duration_minutes,	
+        workitems.schedule_travel_time_minutes,
         workitems.properties_operationalstatus as operationalstatus,
         workitems.properties_model as model,
         workitems.properties_source as source,
