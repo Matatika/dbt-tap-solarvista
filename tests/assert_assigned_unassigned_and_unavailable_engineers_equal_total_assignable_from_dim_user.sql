@@ -18,17 +18,17 @@ having (SELECT
     from {{ ref('dim_user')}}
     where is_assignable = true
     and user_id not in (
-    select user_id
-    from {{ ref('fact_workitem')}}
-    left join {{ ref('dim_user')}} as assigned_users on assigned_users.users_sk = fact_workitem.users_sk
-    where schedule_start_time::date = now()::date
-    and fact_workitem.customer_id='2386264880'
-    and user_id is not null
-    union
-    select
-        user_id
-    from {{ ref('fact_appointment')}}
-    where "start"::date = now()::date
+        select user_id
+        from {{ ref('fact_workitem')}}
+        left join {{ ref('dim_user')}} as assigned_users on assigned_users.users_sk = fact_workitem.users_sk
+        where schedule_start_time::date = now()::date
+        and fact_workitem.customer_id='2386264880'
+        and user_id is not null
+        union
+        select
+            user_id
+        from {{ ref('fact_appointment')}}
+        where "start"::date = now()::date
     )) + 
     (select
    	    count(distinct user_id) as "Unavailable"
