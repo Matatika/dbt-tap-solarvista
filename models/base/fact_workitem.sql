@@ -49,6 +49,7 @@ fact_workitem as (
         workitems.properties_equipment_id as equipment_id,    
         workitems.properties_problem_id as problem_id,
         workitems.work_item_template_id as template_id,
+        workitems.work_item_template_display_name as template_display_name,
 
         --all other attributes from workitem stage table
         workitems.current_workflow_stage_type as current_stage,
