@@ -46,7 +46,8 @@ not_assignable_users as (
 ),
 engineer_availability as (
 	select 
-	display_name
+	user_id
+	, display_name
 	, email
 	, is_reactive
 	, is_maintenance
@@ -73,6 +74,7 @@ engineer_availability as (
 final as (
 	select
 		current_date as availability_date
+		, engineer_availability.user_id as user_id
 		, engineer_availability.display_name as display_name
 		, engineer_availability.email as email
 		, engineer_availability.is_reactive as is_reactive
