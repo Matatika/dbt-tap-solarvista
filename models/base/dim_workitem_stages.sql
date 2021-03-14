@@ -1,4 +1,4 @@
-{{ config(materialized='table') }}
+{{ config(materialized='incremental') }}
 
 with workitems_history as (
     select * from {{ ref('fact_workitem_history') }}
@@ -156,6 +156,7 @@ dim_workitem_stages as (
     select distinct 
         workitems.work_item_id,
         workitems.reference,
+        workitems.last_modified,
         workitems_accepted.stage_transition_received_at as accepted_timestamp,
         workitems_closed.stage_transition_received_at as closed_timestamp,  
         workitems_assigned.stage_transition_received_at as assigned_timestamp,  
@@ -183,5 +184,9 @@ dim_workitem_stages as (
         left join workitems_travellingto using (work_item_id) 
         left join workitems_unassigned using (work_item_id)
         left join workitems_working using (work_item_id)
+{% if is_incremental() %}
+    -- this filter will only be applied on an incremental run
+    where last_modified > (select max(t2.last_modified) from {{ this }} as t2)
+{% endif %}
 )
 select * from dim_workitem_stages
