@@ -1,6 +1,8 @@
 {{
-    config(materialized='incremental'),
-    unique_key='work_item_id'
+    config(
+        materialized='incremental', 
+        unique_key='work_item_id'
+    )
 }}
 
 with workitems_history as (
