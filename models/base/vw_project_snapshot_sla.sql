@@ -1,9 +1,8 @@
 with workitems as (
-    select * from {{ ref('fact_workitem_incremental') }}
+    select * from {{ ref('fact_workitem') }}
 ),
 projects as (
-     select distinct * from {{ ref('dim_project_snapshot') }} 
-     where dbt_valid_to is null
+     select distinct * from {{ ref('dim_project') }} 
 ),
 project_workitem_count as (
     select distinct
@@ -11,7 +10,7 @@ project_workitem_count as (
         workitems.count as total_workitems
     from workitems
     left join projects 
-        on projects.dbt_scd_id = workitems.projects_sk   
+        on projects.dbt_scd_id = workitems.project_sk   
     group by projects.reference
 ),
 project_workitem_active as (
@@ -19,7 +18,7 @@ project_workitem_active as (
         projects.reference as project_id,
         workitems.count as active_workitems
     from workitems, projects 
-    where projects.dbt_scd_id = workitems.projects_sk 
+    where projects.dbt_scd_id = workitems.project_sk 
     and workitems.current_stage Not in ('Discarded','Closed','RemoteClosed','Rejected','Cancelled')
     group by projects.reference
 ),

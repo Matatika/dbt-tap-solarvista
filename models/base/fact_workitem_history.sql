@@ -1,4 +1,4 @@
-{{ config(materialized='table') }}
+{{ config(materialized='incremental') }}
 
 with workitemhistory as (
     select * from "{{var('schema')}}".workitemhistory_stream
@@ -19,6 +19,7 @@ fact_workitem_history as (
         ,by_users.users_sk as by_users_sk
 
 	    -- dimensions
+        ,workitemhistory.last_modified
         ,workitemhistory.stage_transition_received_at::date as report_date
         ,EXTRACT(YEAR FROM stage_transition_received_at)::integer as report_year
         ,EXTRACT(MONTH FROM stage_transition_received_at)::integer as report_month
@@ -50,5 +51,9 @@ fact_workitem_history as (
     from workitemhistory
 	left join to_users on to_users.user_id = workitemhistory.stage_assigned_user_user_id
 	left join by_users on by_users.user_id = workitemhistory.stage_transition_transitioned_by_user_id
+{% if is_incremental() %}
+    -- this filter will only be applied on an incremental run
+    where last_modified > (select max(t2.last_modified) from {{ this }} as t2)
+{% endif %}
 )
 select * from fact_workitem_history
