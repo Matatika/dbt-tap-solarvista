@@ -86,7 +86,7 @@ fact_workitem as (
     left join customers on customers.reference = workitems.properties_customer_id
 {% if is_incremental() %}
     -- this filter will only be applied on an incremental run
-    where last_modified > (select max(t2.last_modified) from {{ this }} as t2)
+    where workitems.last_modified > (select max(t2.last_modified) from {{ this }} as t2)
 {% endif %}
 )
 select * from fact_workitem
