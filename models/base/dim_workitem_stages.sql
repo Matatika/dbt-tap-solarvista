@@ -1,4 +1,7 @@
-{{ config(materialized='incremental') }}
+{{
+    config(materialized='incremental'),
+    unique_key='work_item_id'
+}}
 
 with workitems_history as (
     select * from {{ ref('fact_workitem_history') }}

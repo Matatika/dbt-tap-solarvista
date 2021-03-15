@@ -1,4 +1,7 @@
-{{ config(materialized='incremental') }}
+{{
+    config(materialized='incremental'),
+    unique_key='work_item_history_id'
+}}
 
 with workitemhistory as (
     select * from "{{var('schema')}}".workitemhistory_stream
