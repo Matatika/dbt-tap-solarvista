@@ -5,9 +5,9 @@ with fact_workitem as (
     from {{ ref('fact_workitem') }}
     where report_date >= current_date - interval '30' day
 ),
-dim_workitem_stages as (
+fact_workitem_stages as (
     select * 
-    from {{ ref('dim_workitem_stages') }}
+    from {{ ref('fact_workitem_stages') }}
     where assigned_timestamp::date >= current_date - interval '30' day
 ),
 fact_appointment as (
