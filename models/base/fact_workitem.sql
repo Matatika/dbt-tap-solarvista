@@ -1,3 +1,7 @@
+--
+-- work items facts
+--
+
 {{
     config(
         materialized='incremental',
@@ -72,7 +76,7 @@ fact_workitem as (
         
         --SCD surrogate keys for join purposes in reporting layer
         users.users_sk, 
-        projects.project_sk,
+        projects.project_sk as project_sk,
         territories.territory_sk,
         sites.site_sk,
         customers.customer_sk,

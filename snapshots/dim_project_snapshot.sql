@@ -4,8 +4,8 @@
     config(
       target_schema=var('schema'),
       unique_key='reference',
-      strategy='check',      
-      check_cols=['status', 'createdon', 'closedon'],
+      strategy='timestamp',
+      updated_at='last_modified',
     )
 }}
 
