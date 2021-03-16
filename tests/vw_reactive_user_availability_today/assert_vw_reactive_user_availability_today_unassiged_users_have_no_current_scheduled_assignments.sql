@@ -15,8 +15,8 @@ and user_id not in (select user_id
                     and "start" <= now()
                     and "end" > now())
 group by user_id
-having count(user_id) = (select
-                            count(user_id)
-                        from {{ ref('vw_reactive_user_availability')}}
+having user_id not in (select
+                            user_id
+                        from {{ ref('vw_reactive_user_availability_today')}}
                         where current_availability = 'Unassigned')
                                             
