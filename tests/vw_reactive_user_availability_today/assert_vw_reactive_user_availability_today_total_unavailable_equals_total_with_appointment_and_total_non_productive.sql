@@ -4,7 +4,7 @@ select
     count(*)
 from {{ ref('vw_reactive_user_availability_today')}}
 where current_availability = 'Unavailable'
-having count(*) != (select count(*)
+having count(*) = (select count(*)
                     from {{ ref('fact_appointment')}}
                     where "start"::date = current_date
                     and "start" <= now()
