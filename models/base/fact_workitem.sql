@@ -1,3 +1,7 @@
+--
+-- work items facts
+--
+
 {{
     config(
         materialized='incremental',

@@ -4,7 +4,7 @@ with workitems as (
 ),
 
 workitem_stages as (
-    select * from {{ ref('dim_workitem_stages') }}
+    select * from {{ ref('fact_workitem_stages') }}
 ),
 
 projects as (

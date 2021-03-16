@@ -1,3 +1,7 @@
+--
+-- An accumulating snapshot fact table for work items
+--
+
 {{
     config(
         materialized='incremental', 
