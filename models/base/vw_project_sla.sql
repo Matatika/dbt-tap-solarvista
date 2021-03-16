@@ -1,396 +1,12 @@
-
-with workitems_history as (
-    select * from {{ ref('fact_workitem_history') }}
-),
-workitems as (
+with workitems as (
     select * from {{ ref('fact_workitem') }}
 ),
+workitem_stages as (
+     select distinct * from {{ ref('fact_workitem_stages') }} 
+),
 projects as (
-     select distinct * from {{ ref('dim_project') }}
+     select distinct * from {{ ref('dim_project') }} 
 ),
-workitems_accepted as (
---Sql to retrieve the earliest stage transition date
-select ht.work_item_id,ht.stage_transition_received_at
-FROM (
-    Select ht.work_item_id, Min(ht.stage_transition_received_at) AS MinDate
-    from workitems_history ht 
-    where ht.stage_stage_type = 'Accepted' 
-    GROUP BY ht.work_item_id
-) AS t2
-INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
-),
-workitems_closed as (
---Sql to retrieve the earliest stage transition date
-select ht.work_item_id,ht.stage_transition_received_at
-FROM (
-    Select ht.work_item_id, Min(ht.stage_transition_received_at) AS MinDate
-    from workitems_history ht 
-    where ht.stage_stage_type = 'Closed' 
-    GROUP BY ht.work_item_id
-) AS t2
-INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
-),
-workitems_assigned as (
---Sql to retrieve the earliest stage transition date
-select ht.work_item_id,ht.stage_transition_received_at
-FROM (
-    Select ht.work_item_id, Min(ht.stage_transition_received_at) AS MinDate
-    from workitems_history ht 
-    where ht.stage_stage_type = 'Assigned' 
-    GROUP BY ht.work_item_id
-) AS t2
-INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
-),
-workitems_cancelled as (
---Sql to retrieve the earliest stage transition date
-select ht.work_item_id,ht.stage_transition_received_at
-FROM (
-    Select ht.work_item_id, Min(ht.stage_transition_received_at) AS MinDate
-    from workitems_history ht 
-    where ht.stage_stage_type = 'Cancelled' 
-    GROUP BY ht.work_item_id
-) AS t2
-INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
-),
-workitems_discarded as (
---Sql to retrieve the earliest stage transition date
-select ht.work_item_id,ht.stage_transition_received_at
-FROM (
-    Select ht.work_item_id, Min(ht.stage_transition_received_at) AS MinDate
-    from workitems_history ht 
-    where ht.stage_stage_type = 'Discarded' 
-    GROUP BY ht.work_item_id
-) AS t2
-INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
-),
-workitems_postworking as (
---Sql to retrieve the earliest stage transition date
-select ht.work_item_id,ht.stage_transition_received_at
-FROM (
-    Select ht.work_item_id, Min(ht.stage_transition_received_at) AS MinDate
-    from workitems_history ht 
-    where ht.stage_stage_type = 'PostWorking' 
-    GROUP BY ht.work_item_id
-) AS t2
-INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
-),
-workitems_preworking as (
---Sql to retrieve the earliest stage transition date
-select ht.work_item_id,ht.stage_transition_received_at
-FROM (
-    Select ht.work_item_id, Min(ht.stage_transition_received_at) AS MinDate
-    from workitems_history ht 
-    where ht.stage_stage_type = 'PreWorking' 
-    GROUP BY ht.work_item_id
-) AS t2
-INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
-),
-workitems_quickclose as (
---Sql to retrieve the earliest stage transition date
-select ht.work_item_id,ht.stage_transition_received_at
-FROM (
-    Select ht.work_item_id, Min(ht.stage_transition_received_at) AS MinDate
-    from workitems_history ht 
-    where ht.stage_stage_type = 'QuickClose' 
-    GROUP BY ht.work_item_id
-) AS t2
-INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
-),
-workitems_remoteclosed as (
---Sql to retrieve the earliest stage transition date
-select ht.work_item_id,ht.stage_transition_received_at
-FROM (
-    Select ht.work_item_id, Min(ht.stage_transition_received_at) AS MinDate
-    from workitems_history ht 
-    where ht.stage_stage_type = 'RemoteClosed' 
-    GROUP BY ht.work_item_id
-) AS t2
-INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
-),
-workitems_travellingfrom as (
---Sql to retrieve the earliest stage transition date
-select ht.work_item_id,ht.stage_transition_received_at
-FROM (
-    Select ht.work_item_id, Min(ht.stage_transition_received_at) AS MinDate
-    from workitems_history ht 
-    where ht.stage_stage_type = 'TravellingFrom' 
-    GROUP BY ht.work_item_id
-) AS t2
-INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
-),
-workitems_travellingto as (
---Sql to retrieve the earliest stage transition date
-select ht.work_item_id,ht.stage_transition_received_at
-FROM (
-    Select ht.work_item_id, Min(ht.stage_transition_received_at) AS MinDate
-    from workitems_history ht 
-    where ht.stage_stage_type = 'TravellingTo' 
-    GROUP BY ht.work_item_id
-) AS t2
-INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
-),
-workitems_unassigned as (
---Sql to retrieve the earliest stage transition date
-select ht.work_item_id,ht.stage_transition_received_at
-FROM (
-    Select ht.work_item_id, Min(ht.stage_transition_received_at) AS MinDate
-    from workitems_history ht 
-    where ht.stage_stage_type = 'Unassigned' 
-    GROUP BY ht.work_item_id
-) AS t2
-INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
-),
-workitems_working as (
---Sql to retrieve the earliest stage transition date
-select ht.work_item_id,ht.stage_transition_received_at
-FROM (
-    Select ht.work_item_id, Min(ht.stage_transition_received_at) AS MinDate
-    from workitems_history ht 
-    where ht.stage_stage_type = 'Working' 
-    GROUP BY ht.work_item_id
-) AS t2
-INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id AND ht.stage_transition_received_at= t2.MinDate
-),
-workitems_reactivated as (
---Sql to retrieve the earliest reactivation work item date
-select wi.project_id, wi.created_on
-FROM (
-    select wi.project_id, Min(wi.created_on) AS MinDate
-    from workitems wi 
-    where tags ? 'Reactivation' 
-    GROUP BY wi.project_id
-) AS t2
-INNER JOIN workitems wi ON wi.project_id = t2.project_id AND wi.created_on = t2.MinDate
-),
-
-project_dates as (
-    select distinct
-        projects.reference as project_id,
-        min(projects.project_sk) as project_sk,
-        min(workitems.customer_sk) as customer_sk,
-        min(workitems.site_sk) as site_sk,
-        min(workitems.territory_sk) as territory_sk,
-	    min(projects.project_type) as project_type,
-	    min(projects.status) as project_status,
-	    min(projects.problemtype) as problemtype,
-        min(projects.appliedresponsesla) as appliedresponsesla,
-        min(projects.responseduedate) as responsedue_date,
-        min(projects.appliedfixsla) as appliedfixsla,
-        min(projects.fixduedate) as fixdue_date,
-        count(distinct workitems.work_item_id) as total_workitems,
-        min(workitems.schedule_start_date) as schedule_start_date,
-
-        -- dates from workitems
-        min(workitems_accepted.stage_transition_received_at) as accepted_timestamp,
-        min(workitems_closed.stage_transition_received_at) as closed_timestamp,  
-        min(workitems_assigned.stage_transition_received_at) as assigned_timestamp,  
-        min(workitems_cancelled.stage_transition_received_at) as cancelled_timestamp,  
---        min(workitem_stages.discarded_timestamp) as discarded_timestamp,  
---        min(workitem_stages.postworking_timestamp) as postworking_timestamp,
-        min(workitems_preworking.stage_transition_received_at) as preworking_timestamp,
-        min(workitems_quickclose.stage_transition_received_at) as quickclose_timestamp,  
-        min(workitems_remoteclosed.stage_transition_received_at) as remoteclosed_timestamp,  
---        min(workitem_stages.travellingfrom_timestamp) as travellingfrom_timestamp,  
---        min(workitem_stages.travellingto_timestamp) as travellingto_timestamp,  
---        min(workitem_stages.unassigned_timestamp) as unassigned_timestamp,  
---        min(workitem_stages.working_timestamp) as working_timestamp,
-        min(workitems_reactivated.created_on) as reactivated_timestamp,
-
-        -- Used to calculate SLAs
-        (case
-             when min(projects.createdon) is not null then min(projects.createdon)
-             when min(workitems.created_on) is not null then min(workitems.created_on)
-		 end) as createdon,
-        (case
-             when max(projects.closedon) is not null then max(projects.closedon)
-             when max(workitems_remoteclosed.stage_transition_received_at) is not null 
-                then max(workitems_remoteclosed.stage_transition_received_at)
-             when max(workitems_quickclose.stage_transition_received_at) is not null 
-                then max(workitems_quickclose.stage_transition_received_at)
-             when max(workitems_cancelled.stage_transition_received_at) is not null 
-                then max(workitems_cancelled.stage_transition_received_at)
-             when max(projects.status) != 'Active' then
-                case
-                    when max(workitems_closed.stage_transition_received_at) is not null 
-                        then max(workitems_closed.stage_transition_received_at)
-                     when min(workitems.created_on) is not null
-                        then min(workitems.created_on)
-                        else min(projects.createdon)
-                end
-		 end) as closedon
-    from workitems
-    left join projects 
-        on projects.project_sk = workitems.project_sk
-    left join workitems_accepted using (work_item_id)
-    left join workitems_closed using (work_item_id)
-    left join workitems_assigned using (work_item_id)
-    left join workitems_cancelled using (work_item_id)
-    left join workitems_discarded using (work_item_id)
-    left join workitems_postworking using (work_item_id)
-    left join workitems_preworking using (work_item_id)
-    left join workitems_quickclose using (work_item_id)
-    left join workitems_remoteclosed using (work_item_id)
-    left join workitems_travellingfrom using (work_item_id)
-    left join workitems_travellingto using (work_item_id) 
-    left join workitems_unassigned using (work_item_id)
-    left join workitems_working using (work_item_id)
-    left join workitems_reactivated using (project_id)
-    group by projects.reference
-),
-
-project_states as (
-    select distinct
-
-        -- keys
-        project_id,
-        min(project_sk) as project_sk,
-        min(customer_sk) as customer_sk,
-        min(site_sk) as site_sk,
-        min(territory_sk) as territory_sk,
-
-	    min(project_type) as project_type,
-	    min(project_status) as project_status,
-        min(problemtype) as problemtype,
-        min(createdon) as createdon,
-        min(closedon) as closedon,
-        min(appliedresponsesla) as appliedresponsesla,
-        min(responsedue_date) as responsedue_date,
-        min(appliedfixsla) as appliedfixsla,
-        min(fixdue_date) as fixdue_date,
-        min(total_workitems) as total_workitems,
-        min(schedule_start_date) as schedule_start_date,
-
-        -- dates from workitems
-        min(accepted_timestamp) as accepted_timestamp,
-        min(closed_timestamp) as closed_timestamp,  
-        min(assigned_timestamp) as assigned_timestamp,  
-        min(cancelled_timestamp) as cancelled_timestamp,  
---        min(discarded_timestamp) as discarded_timestamp,  
---        min(postworking_timestamp) as postworking_timestamp,  
-        min(preworking_timestamp) as preworking_timestamp,  
-        min(quickclose_timestamp) as quickclose_timestamp,  
-        min(remoteclosed_timestamp) as remoteclosed_timestamp,  
---        min(travellingfrom_timestamp) as travellingfrom_timestamp,  
---        min(travellingto_timestamp) as travellingto_timestamp,  
---        min(unassigned_timestamp) as unassigned_timestamp,  
---        min(working_timestamp) as working_timestamp,
-        min(reactivated_timestamp) as reactivated_timestamp,
-
-        (case
-             -- Use PreWorking time as first response or closed time
-             when min(preworking_timestamp) is not null 
-                then min(preworking_timestamp)
-                else min(closedon)
-         end ) as firstresponse_date,
-        -- TODO, we dont actually have a fix date yet
-        min(closedon) as firstfix_date,
-        min(closedon) as finalfix_date,
-	    (case 
-             when min(closedon) is not null then 0
-             when min(total_workitems) = 0 then 0
-		     when min(project_status) = 'Active' then 1 else 0
-		 end) as is_open,
-        (case
-             when min(closedon) is not null then 1
-             when min(total_workitems) = 0 then 1
-		     when min(project_status) = 'Active' then 0 else 1 
-		 end) as is_closed,
-	    (case 
-		     when min(cancelled_timestamp) is not null then 1 
-		     when min(project_status) = 'Cancelled' then 1 
-		 end) as is_cancelled
-    from project_dates
-    group by project_id
-),
-
-stats as (
-    select distinct
-        project_id,
-        min(customer_sk) as customer_sk,
-        min(site_sk) as site_sk,
-        min(territory_sk) as territory_sk,
-        min(project_sk) as project_sk,
-        createdon::date as report_date,
-        EXTRACT(YEAR FROM createdon)::integer as report_year,
-        EXTRACT(MONTH FROM createdon)::integer as report_month,
-        EXTRACT(DAY FROM createdon)::integer as report_day,
-
-	    min(project_type) as project_type,
-	    min(project_status) as project_status,
-        min(problemtype) as problemtype,
-        min(createdon) as createdon,
-        min(closedon) as closedon,
-        min(appliedresponsesla) as appliedresponsesla,
-        min(responsedue_date) as responsedue_date,
-        min(appliedfixsla) as appliedfixsla,
-        min(fixdue_date) as fixdue_date,
-        count(project_id) as total_projects,
-		sum(total_workitems) as total_workitems,
-        min(schedule_start_date) as schedule_start_date,
-
-        min(accepted_timestamp) as accepted_timestamp,
-        min(closed_timestamp) as closed_timestamp,  
-        min(assigned_timestamp) as assigned_timestamp,  
-        min(cancelled_timestamp) as cancelled_timestamp,  
---        min(discarded_timestamp) as discarded_timestamp,  
---        min(postworking_timestamp) as postworking_timestamp,  
-        min(preworking_timestamp) as preworking_timestamp,  
-        min(quickclose_timestamp) as quickclose_timestamp,  
-        min(remoteclosed_timestamp) as remoteclosed_timestamp,  
---        min(travellingfrom_timestamp) as travellingfrom_timestamp,  
---        min(travellingto_timestamp) as travellingto_timestamp,  
---        min(unassigned_timestamp) as unassigned_timestamp,  
---        min(working_timestamp) as working_timestamp,
-        min(reactivated_timestamp) as reactivated_timestamp,
-
-        min(is_open) as is_open,
-        min(is_closed) as is_closed,
-        min(is_cancelled)as is_cancelled,
-        min(firstresponse_date) as first_response,  
-		min(firstfix_date) as first_fix,
-		min(finalfix_date) as final_fix,
-
-        -- Compute "Response" SLA by comparing project 'responseduedate' with 'PreWorking' stage
-        {{ dbt_utils.datediff('min(responsedue_date)', 'min(firstresponse_date)', 'hour') }} as response_hours,
-		(case 
-            when min(is_cancelled) = 1 then 1 
-            when min(appliedresponsesla) is null then 0 
-            when {{ dbt_utils.datediff('min(responsedue_date)', 'min(firstresponse_date)', 'hour') }} <= 0 then 1 else 0 
-         end) as response_within_sla,
-        -- Compute "First Fix" SLA by comparing project ? with '?' stage
-        {{ dbt_utils.datediff('min(fixdue_date)', 'min(firstfix_date)', 'hour') }} as first_fix_hours,
-               (case 
-            when min(is_cancelled) = 1 then 1 
-            when {{ dbt_utils.datediff('min(fixdue_date)', 'min(firstfix_date)', 'hour') }} <= 0 then 1 else 0 
-         end) as first_fix_within_sla,
-        -- Compute "Final Fix" SLA by comparing project 'fixduedate' with project 'closedon'
-        {{ dbt_utils.datediff('min(fixdue_date)', 'min(finalfix_date)', 'hour') }} as final_fix_hours,
-		(case 
-            when min(is_cancelled) = 1 then 1 
-            when min(fixdue_date) is null then 1 
-            when min(finalfix_date) is null and {{ dbt_utils.datediff('min(fixdue_date)', 'now()', 'hour') }} <= 0 then 1
-            when {{ dbt_utils.datediff('min(fixdue_date)', 'min(finalfix_date)', 'hour') }} <= 0 then 1
-            else 0
-         end) as final_fix_within_sla,
-		(case 
-            when min(is_cancelled) = 1 then 0 
-            when min(fixdue_date) is null then 0 
-            when min(finalfix_date) is null and {{ dbt_utils.datediff('min(fixdue_date)', 'now()', 'hour') }} > 0 then 1
-            when {{ dbt_utils.datediff('min(fixdue_date)', 'min(finalfix_date)', 'hour') }} > 0 then 1
-            else 0
-         end) as final_fix_missed_sla,
-		(case 
-            when min(reactivated_timestamp) is null then 1 else 0
-         end) as is_firstfix,
-		(case 
-            when min(reactivated_timestamp) is not null then 1 else 0
-         end) as is_refix
-    from project_states
-    where project_id is not null
-    group by project_id, report_date, report_year, report_month, report_day
-    order by report_year ASC, report_month ASC, report_day ASC
-),
-
 customers as (
      select distinct * from {{ ref('dim_customer') }}
 ),
@@ -403,53 +19,190 @@ territories as (
 dates as (
     select * from {{ ref('dim_date') }}
 ),
+project_workitem_count as (
+    select distinct
+        projects.reference as project_id,
+        workitems.count as total_workitems
+    from workitems
+    left join projects 
+        on projects.project_sk = workitems.project_sk   
+    group by projects.reference
+),
+project_workitem_active as (
+    select distinct
+        projects.reference as project_id,
+        workitems.count as active_workitems
+    from workitems, projects 
+    where projects.project_sk = workitems.project_sk 
+    and workitems.current_stage Not in ('Discarded','Closed','RemoteClosed','Rejected','Cancelled')
+    group by projects.reference
+),
+project_reactivated as (
+    select distinct
+        projects.reference as project_id,
+        min(workitems.created_on) AS ValueDate
+    from workitems, projects 
+    where projects.project_sk = workitems.project_sk 
+    and workitems.tags ? 'Reactivation'
+    group by projects.reference
+),
 
-final as (
+project_stages as (
     select
-        project_id,
-        report_date,
-        report_year,
-        report_month,
-        report_day,
-	    
-        stats.createdon,
-        stats.closedon,
+        distinct projects.reference as project_id,
+        projects.createdon,
 
+        min(workitems.project_sk) as project_sk,
+        min(workitems.customer_sk) as customer_sk,
+        min(workitems.site_sk) as site_sk,
+        min(workitems.territory_sk) as territory_sk,
+        min(workitems.schedule_start_date) as schedule_start_date,
+        min(project_reactivated.ValueDate) as reactivated_timestamp,
+        min(workitem_stages.remoteclosed_timestamp) as remoteclosed_timestamp,
+        min(workitem_stages.cancelled_timestamp) as cancelled_timestamp,
+        min(workitem_stages.preworking_timestamp) as preworking_timestamp,
+        (case
+             -- Use PreWorking time as first response or closedon
+             when min(workitem_stages.preworking_timestamp) is not null 
+                then min(workitem_stages.preworking_timestamp)
+                else min(projects.closedon)
+         end ) as firstresponse_date,
+        -- Try to get a finalfix_date and calculate final fix SLAs in the face of bad data
+        (case
+             when min(projects.closedon) is not null then min(projects.closedon)
+             when min(projects.status) != 'Active' then
+                case
+                    when max(workitem_stages.closed_timestamp) is not null 
+                        then max(workitem_stages.closed_timestamp)
+                    when min(workitems.created_on) is not null
+                        then min(workitems.created_on)
+                        else min(projects.createdon)
+                end
+		 end) as finalfix_date,
+
+	    (case 
+		     when min(projects.status) = 'Active' then 1 else 0
+		 end) as is_open,
+        (case
+		     when min(projects.status) = 'Active' then 0 else 1 
+		 end) as is_closed,
+	    (case 
+		     when min(projects.status) = 'Cancelled' then 1 
+		 end) as is_cancelled,
+		(case 
+            when min(project_reactivated.ValueDate) is null then 1 else 0
+         end) as is_firstfix,
+		(case 
+            when min(project_reactivated.ValueDate) is not null then 1 else 0
+         end) as is_refix
+
+    from workitems
+        left outer join projects on projects.project_sk = workitems.project_sk
+        left outer join workitem_stages on workitem_stages.work_item_id = workitems.work_item_id
+        left outer join project_workitem_active on project_workitem_active.project_id = projects.reference
+        left outer join project_reactivated on project_reactivated.project_id = projects.reference
+    group by projects.reference, projects.createdon
+            
+),
+
+stats as (
+    select
+        distinct projects.reference as project_id,
+        projects.createdon::date as report_date,
+        EXTRACT(YEAR FROM projects.createdon)::integer as report_year,
+        EXTRACT(MONTH FROM projects.createdon)::integer as report_month,
+        EXTRACT(DAY FROM projects.createdon)::integer as report_day,
+
+        projects.project_sk,
+        customer_sk,
+        site_sk,
+        territory_sk,
         schedule_start_date,
-        total_projects,
-		total_workitems,
-
-        accepted_timestamp,
-        closed_timestamp,  
-        assigned_timestamp,  
-        cancelled_timestamp,  
---      discarded_timestamp,  
---      postworking_timestamp,  
-        preworking_timestamp,  
-        quickclose_timestamp,  
-        remoteclosed_timestamp,  
---      travellingfrom_timestamp,  
---      travellingto_timestamp,  
---      unassigned_timestamp,  
---      as working_timestamp,
         reactivated_timestamp,
-
+        remoteclosed_timestamp,
+        cancelled_timestamp,
+        preworking_timestamp,
+        firstresponse_date,
+        finalfix_date,
         is_open,
         is_closed,
         is_cancelled,
-        is_refix,
         is_firstfix,
-        first_response,  
-		first_fix,
-		final_fix,
+        is_refix,
 
-        response_hours,
-        response_within_sla,
-        first_fix_hours,
-        first_fix_within_sla,
-        final_fix_hours,
-        final_fix_within_sla,
-        final_fix_missed_sla,
+        total_workitems as total_workitems,
+        active_workitems as active_workitems,
+
+        -- Compute "Response" SLA by comparing project 'responseduedate' with 'PreWorking' stage
+        {{ dbt_utils.datediff('responseduedate', 'firstresponse_date', 'hour') }} as response_hours,
+		(case 
+            when is_cancelled = 1 then 1 
+            when projects.responseduedate is null then 1
+            when firstresponse_date is null then 0
+            when {{ dbt_utils.datediff('projects.responseduedate', 'firstresponse_date', 'hour') }} <= 0 then 1
+            else 0
+         end) as response_within_sla,
+		(case 
+            when is_cancelled = 1 then 0
+            when projects.responseduedate is null then 0
+            when firstresponse_date is null then 1
+            when {{ dbt_utils.datediff('projects.responseduedate', 'firstresponse_date', 'hour') }} > 0 then 1
+            else 0
+         end) as response_missed_sla,
+        -- Compute "Final Fix" SLA by comparing project 'fixduedate' with project 'finalfix_date'
+        {{ dbt_utils.datediff('projects.fixduedate', 'project_stages.finalfix_date', 'hour') }} as final_fix_hours,
+		(case 
+            when is_cancelled = 1 then 1
+            when projects.fixduedate is null then 1
+            when project_stages.finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} <= 0 then 1
+            when {{ dbt_utils.datediff('projects.fixduedate', 'project_stages.finalfix_date', 'hour') }} <= 0 then 1
+            else 0
+         end) as final_fix_within_sla,
+		(case 
+            when is_cancelled = 1 then 0
+            when projects.fixduedate is null then 0
+            when project_stages.finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} > 0 then 1
+            when {{ dbt_utils.datediff('projects.fixduedate', 'project_stages.finalfix_date', 'hour') }} > 0 then 1
+            else 0
+         end) as final_fix_missed_sla
+
+    from project_stages
+        left outer join projects on projects.project_sk = project_stages.project_sk
+        left outer join project_workitem_count on project_workitem_count.project_id = projects.reference
+        left outer join project_workitem_active on project_workitem_active.project_id = projects.reference
+            
+),
+
+final as (
+    select
+        stats.project_id,
+        stats.report_date,
+        stats.report_year,
+        stats.report_month,
+        stats.report_day,
+        stats.schedule_start_date,
+        stats.reactivated_timestamp,
+        stats.remoteclosed_timestamp,
+        stats.cancelled_timestamp, -- deprecated, update reports to remove this
+        stats.preworking_timestamp, -- deprecated, update vw_daily_project_sla to use dim project snapshot and remove this
+        stats.firstresponse_date,
+        stats.firstresponse_date as first_response, -- deprecated, update reports to remove this
+        stats.finalfix_date,
+        stats.finalfix_date as final_fix, -- deprecated, update reports to remove this
+        stats.is_open,
+        stats.is_closed,
+        stats.is_cancelled,
+        stats.is_firstfix,
+        stats.is_refix,
+        stats.total_workitems,
+        stats.active_workitems,
+        stats.response_hours,
+        stats.response_within_sla,
+        stats.response_missed_sla,
+        stats.final_fix_hours,
+        stats.final_fix_within_sla,
+        stats.final_fix_missed_sla,
+        1 as total_projects, -- deprecated, update reports to remove this
 
         dates.day_of_month,
         dates.day_of_year,
@@ -463,22 +216,25 @@ final as (
         sites.name as site_name,
         customers.reference as customer_id,
         customers.name as customer_name,
+        projects.createdon,
+        projects.closedon,
         projects.appliedfixsla,
         projects.appliedresponsesla,
         projects.project_type,
         projects.problemtype,
         projects.status as project_status,
-        projects.responseduedate as responsedue_date,
-        projects.fixduedate as fixdue_date,
-        projects.source as source
-
-
+        projects.responseduedate,
+        projects.responseduedate as responsedue_date,  -- deprecated, update reports to remove this
+        projects.fixduedate,
+        projects.fixduedate as fixdue_date,  -- deprecated, update reports to remove this
+        projects.source
 
     from stats
         left outer join dates on dates.date_day = stats.report_date
+        left outer join projects on projects.project_sk = stats.project_sk
         left outer join customers on customers.customer_sk = stats.customer_sk
         left outer join sites on sites.site_sk = stats.site_sk
         left outer join territories on territories.territory_sk = stats.territory_sk
-        left outer join projects on projects.project_sk = stats.project_sk
+    where stats.project_id is not null
 )
 select * from final

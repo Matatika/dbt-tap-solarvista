@@ -30,25 +30,23 @@ daily_stats as (
         crds.reference as customer_id,
 
         -- basic aggregations
-        sum(total_projects) as total_projects,
+        count(distinct project_id) as total_projects,
         sum(total_workitems) as total_workitems,
         sum(response_within_sla) as response_within_sla,
-        sum(first_fix_within_sla) as first_fix_within_sla,
         sum(final_fix_within_sla) as final_fix_within_sla,
 		sum(response_hours) as response_hours,
-		sum(first_fix_hours) as first_fix_hours,
 		sum(final_fix_hours) as final_fix_hours,
 
         -- Total rolling open work orders on this report_date
         (select count(*)
             from project_slas p
             where p.createdon::date <= crds.report_date
-            and p.final_fix::date > crds.report_date
+            and p.closedon::date > crds.report_date
             and p.customer_id = crds.reference
             or p.project_id in 
-                (select p2.project_id 
+                (select p2.project_id
                     from project_slas p2
-                    where p2.createdon::date <= crds.report_date
+                    where (p2.createdon::date <= crds.report_date or p2.createdon is null)
                     and p2.customer_id = crds.reference
                     and p2.is_open = 1)
         ) as total_open,
@@ -66,7 +64,7 @@ daily_stats as (
             where p.preworking_timestamp::date = crds.report_date
             and p.customer_id = crds.reference
         ) as total_attended,
-
+ 
         -- Total work orders recalled report_date
         (select count(*)
             from project_slas p
@@ -136,11 +134,6 @@ aggregations as (
         round( avg(response_hours)::numeric, 1) as avg_first_response_hours,
         round( ((sum(response_within_sla) / NULLIF(sum(total_with_response_sla), 0)) * 100)::numeric, 2) 
             as response_sla_percent,
-        -- first fix SLA aggregations
-        sum(first_fix_within_sla) as total_first_fix_within_sla,
-        round( avg(first_fix_hours)::numeric, 1) as avg_first_fix_hours,
-        round( ((sum(first_fix_within_sla) / NULLIF(sum(total_projects), 0)) * 100)::numeric, 2) 
-            as first_fix_sla_percent,
         -- final fix SLA aggregations
         sum(final_fix_within_sla) as total_final_fix_within_sla,
         round( avg(final_fix_hours)::numeric, 1) as avg_final_fix_hours,
@@ -191,10 +184,6 @@ daily_projects_stats as (
         total_response_within_sla,
         response_sla_percent,
         avg_first_response_hours,
-
-        total_first_fix_within_sla,
-        avg_first_fix_hours,
-        first_fix_sla_percent,
 
         total_final_fix_within_sla,
         avg_final_fix_hours,

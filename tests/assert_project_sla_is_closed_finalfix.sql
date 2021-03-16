@@ -6,4 +6,4 @@ select
 from {{ ref('vw_project_sla' )}}
 where is_closed = 1
 group by 1
-having min(final_fix) is null
+having min(finalfix_date) is null
