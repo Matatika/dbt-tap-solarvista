@@ -51,6 +51,7 @@ project_stages as (
     select
         distinct projects.reference as project_id,
         projects.createdon,
+        count(distinct projects.reference) as total_projects,
 
         min(workitems.project_sk) as project_sk,
         min(workitems.customer_sk) as customer_sk,
@@ -130,6 +131,7 @@ stats as (
         is_firstfix,
         is_refix,
 
+        total_projects,
         total_workitems as total_workitems,
         active_workitems as active_workitems,
 
@@ -194,6 +196,7 @@ final as (
         stats.is_cancelled,
         stats.is_firstfix,
         stats.is_refix,
+        stats.total_projects, -- deprecated, update reports to remove this (it's just a count(*))
         stats.total_workitems,
         stats.active_workitems,
         stats.response_hours,
@@ -202,7 +205,6 @@ final as (
         stats.final_fix_hours,
         stats.final_fix_within_sla,
         stats.final_fix_missed_sla,
-        1 as total_projects, -- deprecated, update reports to remove this
 
         dates.day_of_month,
         dates.day_of_year,
