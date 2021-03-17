@@ -3,9 +3,10 @@
 select
     count(*)
 from {{ ref('fact_user_assignment')}}
-having count(*) = (select count(*)
+having count(*) != (select count(*)
                     from {{ ref('fact_appointment')}}
-                    where report_date >= current_date - interval '30' day) +
+                    where "start"::date >= current_date - interval '30' day) +
                     (select count(*)
                     from {{ ref('fact_workitem') }}
-                    where report_date >= current_date - interval '30' day)
+                    where schedule_start_date >= current_date - interval '30' day
+                    and assigned_user_id notnull)

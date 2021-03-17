@@ -3,12 +3,12 @@
 with fact_workitem as (
     select * 
     from {{ ref('fact_workitem') }}
-    where report_date >= current_date - interval '30' day
+    where schedule_start_date >= current_date - interval '30' day
 ),
 fact_appointment as (
     select * 
     from {{ ref('fact_appointment') }}
-    where report_date >= current_date - interval '30' day
+    where "end"::date >= current_date - interval '30' day
 ),
 dim_project as (
     select * from {{ ref('dim_project') }}
@@ -42,7 +42,7 @@ users_with_work_items_not_non_productive as (
         , dim_project.project_type as reason
     from fact_workitem
     left join dim_project on dim_project.project_sk = fact_workitem.project_sk
-    where template_display_name != 'Non-Productive Time'
+    where template_display_name in ('Work Order / Job', 'Work Order / PPM')
     and assigned_user_id notnull
     and fact_workitem.schedule_start_time notnull
 ),
@@ -57,7 +57,7 @@ users_with_non_productive_work_item as (
         , fact_workitem.work_item_id as work_item_id
         , 'Non Productive' as reason
     from fact_workitem
-    where template_display_name = 'Non-Productive Time'
+    where template_display_name not in ('Work Order / Job', 'Work Order / PPM')
     and fact_workitem.assigned_user_id notnull
     and fact_workitem.schedule_start_time notnull
 ),
