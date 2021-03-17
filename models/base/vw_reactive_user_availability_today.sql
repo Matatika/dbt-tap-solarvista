@@ -41,6 +41,7 @@ user_reason_unavailable as (
 	and fact_user_assignment.from_timestamp::date = current_date
 	and fact_user_assignment.to_timestamp isnull
 	and fact_user_assignment.appointment_id notnull
+	and fact_user_assignment.user_id not in (select user_id from user_reason_assigned)
 ),
 user_reason_non_productive as (
 	select
@@ -58,6 +59,9 @@ user_reason_non_productive as (
 	and fact_user_assignment.to_timestamp isnull
 	and fact_user_assignment.appointment_id isnull
 	and fact_user_assignment.reason = 'Non Productive'
+	and fact_user_assignment.user_id not in (select user_id from user_reason_assigned
+											union
+											select user_id from user_reason_unavailable)
 ),
 user_reason_unavailable_due_to_maintenance as (
 	select
@@ -74,6 +78,11 @@ user_reason_unavailable_due_to_maintenance as (
 	and fact_user_assignment.to_timestamp isnull
 	and fact_user_assignment.appointment_id isnull
 	and fact_user_assignment.reason = 'Maintenance'
+	and fact_user_assignment.user_id not in (select user_id from user_reason_assigned
+											union
+											select user_id from user_reason_unavailable
+											union
+											select user_id from user_reason_non_productive)
 ),
 user_reason_unassigned as (
 	select
