@@ -5,6 +5,11 @@ with fact_workitem as (
     from {{ ref('fact_workitem') }}
     where schedule_start_date >= current_date - interval '30' day
 ),
+fact_workitem_stages as (
+    select *
+    from {{ ref('fact_workitem_stages')}}
+    where last_modified >= current_date - interval '30' day
+),
 fact_appointment as (
     select * 
     from {{ ref('fact_appointment') }}
@@ -34,7 +39,8 @@ users_with_work_items_not_non_productive as (
     select
         fact_workitem.users_sk as user_sk
         , fact_workitem.assigned_user_id as user_id
-        , fact_workitem.schedule_start_time as from_timestamp
+        , case when fact_workitem_stages.accepted_timestamp notnull then fact_workitem_stages.accepted_timestamp
+        else fact_workitem.schedule_start_time end as from_timestamp
         , case when fact_workitem.work_item_id in (select * from all_active_workitems) then NULL
         else fact_workitem.last_modified end as to_timestamp
         , NULL as appointment_id
@@ -42,6 +48,7 @@ users_with_work_items_not_non_productive as (
         , dim_project.project_type as reason
     from fact_workitem
     left join dim_project on dim_project.project_sk = fact_workitem.project_sk
+    left join fact_workitem_stages on fact_workitem_stages.work_item_id = fact_workitem.work_item_id
     where template_display_name in ('Work Order / Job', 'Work Order / PPM')
     and assigned_user_id notnull
     and fact_workitem.schedule_start_time notnull
@@ -50,13 +57,15 @@ users_with_non_productive_work_item as (
     select
         fact_workitem.users_sk as user_sk
         , fact_workitem.assigned_user_id as user_id
-        , fact_workitem.schedule_start_time as from_timestamp
+        , case when fact_workitem_stages.accepted_timestamp notnull then fact_workitem_stages.accepted_timestamp
+        else fact_workitem.schedule_start_time end as from_timestamp
         , case when fact_workitem.work_item_id in (select * from all_active_workitems) then NULL
         else fact_workitem.last_modified end as to_timestamp
         , NULL as appointment_id
         , fact_workitem.work_item_id as work_item_id
         , 'Non Productive' as reason
     from fact_workitem
+    left join fact_workitem_stages on fact_workitem_stages.work_item_id = fact_workitem.work_item_id
     where template_display_name not in ('Work Order / Job', 'Work Order / PPM')
     and fact_workitem.assigned_user_id notnull
     and fact_workitem.schedule_start_time notnull
