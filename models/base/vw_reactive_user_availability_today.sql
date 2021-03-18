@@ -10,6 +10,16 @@ fact_workitem as (
 dim_user as (
 	select * from {{ ref('dim_user')}}
 ),
+user_next_scheduled_end_timestamp as (
+	select
+		distinct(user_id)
+		, min(scheduled_end_time) as scheduled_end_time
+	from fact_user_assignment
+	where fact_user_assignment.from_timestamp::date = current_date
+	and fact_user_assignment.from_timestamp <= now()
+	and fact_user_assignment.to_timestamp isnull
+	group by user_id
+),
 user_reason_assigned as (
 	select
 		distinct(fact_user_assignment.user_id) as user_id
@@ -103,7 +113,7 @@ user_reason_unassigned as (
 												union
 												select user_id from user_reason_assigned)
 ),
-final as (
+union_of_all as (
 	select * from user_reason_assigned
 	union
 	select * from user_reason_unavailable
@@ -113,5 +123,17 @@ final as (
 	select * from user_reason_unavailable_due_to_maintenance
 	union
 	select * from user_reason_unassigned
+),
+final as (
+	select
+		union_of_all.user_id as user_id
+		, union_of_all.display_name as display_name
+		, union_of_all.email as email
+		, union_of_all.current_availability as current_availability
+		, union_of_all.reason as reason
+		, user_next_scheduled_end_timestamp.scheduled_end_time as scheduled_end_time
+	from union_of_all
+	left join user_next_scheduled_end_timestamp on user_next_scheduled_end_timestamp.user_id = union_of_all.user_id
 )
 select * from final
+order by current_availability
