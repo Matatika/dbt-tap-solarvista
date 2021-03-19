@@ -62,7 +62,7 @@ fact_workitem_history as (
 	left join by_users on by_users.user_id = workitemhistory.stage_transition_transitioned_by_user_id
 {% if is_incremental() %}
     -- this filter will only be applied on an incremental run
-    where last_modified > (select max(t2.last_modified) from {{ this }} as t2)
+    where last_modified >= (select max(t2.last_modified) from {{ this }} as t2)
 {% endif %}
 )
 select * from fact_workitem_history
