@@ -1,14 +1,7 @@
 --
 -- work item history facts
 --
-
-{{
-    config(
-        materialized='incremental',
-        unique_key='work_item_history_id'
-    )
-}}
-
+{{ config(materialized='table') }}
 with workitemhistory as (
     select * from "{{var('schema')}}".workitemhistory_stream
 ),
@@ -60,9 +53,5 @@ fact_workitem_history as (
     from workitemhistory
 	left join to_users on to_users.user_id = workitemhistory.stage_assigned_user_user_id
 	left join by_users on by_users.user_id = workitemhistory.stage_transition_transitioned_by_user_id
-{% if is_incremental() %}
-    -- this filter will only be applied on an incremental run
-    where last_modified >= (select max(t2.last_modified) from {{ this }} as t2)
-{% endif %}
 )
 select * from fact_workitem_history
