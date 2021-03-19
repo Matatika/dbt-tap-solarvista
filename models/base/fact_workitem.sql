@@ -93,9 +93,10 @@ fact_workitem as (
     left join territories on territories.reference = workitems.properties_territories_id
     left join sites on sites.reference = workitems.properties_site_id
     left join customers on customers.reference = workitems.properties_customer_id
+    where projects.status != 'Discarded'
 {% if is_incremental() %}
     -- this filter will only be applied on an incremental run
-    where workitems.last_modified > (select max(t2.last_modified) from {{ this }} as t2)
+    and workitems.last_modified > (select max(t2.last_modified) from {{ this }} as t2)
 {% endif %}
 )
 select * from fact_workitem
