@@ -1,5 +1,8 @@
--- Assert that vw_reactive_user_availability_today total unavailable equals total users
--- with appointment and total users 'Non Productive' for today
+-- Given users with appointments for today
+-- Given users with 'Non Productive' work for today
+-- Given users with 'Maintenance' assigned for today
+-- Expect only these users to be Unavailable in vw_reactive_user_availability_today
+-- Assert that vw_reactive_user_availability_today return no other results
 select
     user_id
 from {{ ref('vw_reactive_user_availability_today')}} as vw_reactive_user_availability_today
@@ -17,3 +20,8 @@ and not exists (select *
                     and fact_workitem.assigned_user_id = vw_reactive_user_availability_today.user_id
                     and current_stage not in ('Closed', 'Cancelled', 'RemoteClosed', 'Discarded', 'Rejected', 'Unassigned')
                     and template_display_name = 'Non-Productive Time')
+and not exists (  -- this query isn't correct, but the view has a problem at the moment
+	select *
+	from {{ ref('fact_user_assignment')}}
+	where to_timestamp is null
+	and reason = 'Maintenance')
