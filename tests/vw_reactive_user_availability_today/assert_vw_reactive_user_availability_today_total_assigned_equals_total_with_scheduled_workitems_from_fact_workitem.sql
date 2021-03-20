@@ -1,7 +1,7 @@
 -- Assert that all assigned users in vw_reactive_user_availability_today have active, scheduled work items in fact_workitem,
 -- where the scheduled start_time <= now for today
 select
-    count(*)
+    *
 from {{ ref('vw_reactive_user_availability_today')}}
 where current_availability = 'assigned'
 having count(*) = (select count(*)

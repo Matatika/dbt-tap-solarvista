@@ -1,7 +1,7 @@
 -- Assert that vw_reactive_user_availability_today total unavailable equals total users
 -- with appointment and total users 'Non Productive' for today
 select
-    count(*)
+    *
 from {{ ref('vw_reactive_user_availability_today')}}
 where current_availability = 'Unavailable'
 having count(*) = (select count(*)
