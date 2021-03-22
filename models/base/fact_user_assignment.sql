@@ -33,7 +33,7 @@ users_with_appointments as (
         , fact_appointment.appointment_id as appointment_id
         , NULL as work_item_id
         , fact_appointment.label as reason
-        , fact_appointment."end" as scheduled_end_time
+        , fact_appointment."end" as scheduled_to_time
     from fact_appointment
 ),
 users_with_work_items_not_non_productive as (
@@ -47,7 +47,7 @@ users_with_work_items_not_non_productive as (
         , NULL as appointment_id
         , fact_workitem.work_item_id as work_item_id
         , dim_project.project_type as reason
-        , fact_workitem.schedule_start_time + (fact_workitem.schedule_duration_minutes * interval '1' minute) as scheduled_end_time
+        , fact_workitem.schedule_start_time + (fact_workitem.schedule_duration_minutes * interval '1' minute) as scheduled_to_time
     from fact_workitem
     left join dim_project on dim_project.project_sk = fact_workitem.project_sk
     left join fact_workitem_stages on fact_workitem_stages.work_item_id = fact_workitem.work_item_id
@@ -66,7 +66,7 @@ users_with_non_productive_work_item as (
         , NULL as appointment_id
         , fact_workitem.work_item_id as work_item_id
         , 'Non Productive' as reason
-        , fact_workitem.schedule_start_time + (fact_workitem.schedule_duration_minutes * interval '1' minute) as scheduled_end_time
+        , fact_workitem.schedule_start_time + (fact_workitem.schedule_duration_minutes * interval '1' minute) as scheduled_to_time
     from fact_workitem
     left join fact_workitem_stages on fact_workitem_stages.work_item_id = fact_workitem.work_item_id
     where template_display_name not in ('Work Order / Job', 'Work Order / PPM')
