@@ -10,7 +10,7 @@ select
     , source
     , sum(total_attended)
 from {{ ref('vw_daily_project_sla' ) }} vw_daily_project_sla
-where report_date >= current_date - 30  -- works for all dates, but this selection reduces the test execution time
+where report_date >= current_date - 1  -- works for all dates, but this selection reduces the test execution time
 and report_date <= current_date
 group by report_date, customer_id, project_type, source
 having not(sum(total_attended) = (

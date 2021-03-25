@@ -243,8 +243,8 @@ daily_stats as (
         -- final fix SLA aggregations
         , sum(final_fix_within_sla) as total_final_fix_within_sla
         , sum(final_fix_missed_sla) as total_final_fix_missed_sla
-        , round( ((sum(final_fix_within_sla) / NULLIF(sum(project_stats.total_created), 0)) * 100)::numeric, 2) 
-            as final_fix_sla_percent  -- NB, if there is not final_fix sla the project met the sla, therefore use all projects created
+        , round( ((sum(final_fix_within_sla) / NULLIF(sum(total_with_final_fix_sla), 0)) * 100)::numeric, 2) 
+            as final_fix_sla_percent
 
     from dimensions
         left join project_stats
