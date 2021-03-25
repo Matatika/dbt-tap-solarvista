@@ -130,31 +130,36 @@ project_stats as (
         , sum(case when appliedfixsla is not null then 1 else 0 end) as total_with_final_fix_sla
 
         -- Compute "Response" SLA by comparing project 'responseduedate' with 'PreWorking' stage
-		, sum((case 
+		, sum((case
+            when projects.appliedresponsesla is null then 0
+            when projects.responseduedate is null then 0
             when is_cancelled = 1 then 1 
-            when projects.responseduedate is null then 1
-            when firstresponse_date is null then 0
+            when firstresponse_date is null and {{ dbt_utils.datediff('projects.responseduedate', 'now()', 'hour') }} <= 0 then 1
             when {{ dbt_utils.datediff('projects.responseduedate', 'firstresponse_date', 'hour') }} <= 0 then 1
             else 0
          end)) as response_within_sla
-		, sum((case 
-            when is_cancelled = 1 then 0
+		, sum((case
+            when projects.appliedresponsesla is null then 0
             when projects.responseduedate is null then 0
-            when firstresponse_date is null then 1
+            when is_cancelled = 1 then 0
+            when firstresponse_date is null and {{ dbt_utils.datediff('projects.responseduedate', 'now()', 'hour') }} > 0 then 1
             when {{ dbt_utils.datediff('projects.responseduedate', 'firstresponse_date', 'hour') }} > 0 then 1
             else 0
          end)) as response_missed_sla
         -- Compute "Final Fix" SLA by comparing project 'fixduedate' with project 'finalfix_date'
-		, sum((case 
+		, sum((case
+            when projects.appliedfixsla is null then 0
+            when projects.fixduedate is null then 0
             when is_cancelled = 1 then 1
             when projects.fixduedate is null then 1
             when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} <= 0 then 1
             when {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} <= 0 then 1
             else 0
          end)) as final_fix_within_sla
-		, sum((case 
-            when is_cancelled = 1 then 0
+		, sum((case
+            when projects.appliedfixsla is null then 0
             when projects.fixduedate is null then 0
+            when is_cancelled = 1 then 0
             when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} > 0 then 1
             when {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} > 0 then 1
             else 0

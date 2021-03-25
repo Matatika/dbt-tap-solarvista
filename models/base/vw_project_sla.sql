@@ -140,14 +140,14 @@ stats as (
 		(case 
             when is_cancelled = 1 then 1 
             when projects.responseduedate is null then 1
-            when firstresponse_date is null then 0
+            when firstresponse_date is null and {{ dbt_utils.datediff('projects.responseduedate', 'now()', 'hour') }} <= 0 then 1
             when {{ dbt_utils.datediff('projects.responseduedate', 'firstresponse_date', 'hour') }} <= 0 then 1
             else 0
          end) as response_within_sla,
 		(case 
             when is_cancelled = 1 then 0
             when projects.responseduedate is null then 0
-            when firstresponse_date is null then 1
+            when firstresponse_date is null and {{ dbt_utils.datediff('projects.responseduedate', 'now()', 'hour') }} > 0 then 1
             when {{ dbt_utils.datediff('projects.responseduedate', 'firstresponse_date', 'hour') }} > 0 then 1
             else 0
          end) as response_missed_sla,
