@@ -3,7 +3,7 @@
 select
 	report_date, customer_id, min(response_sla_percent), min(final_fix_sla_percent), sum(total_with_final_fix_sla), sum(total_final_fix_within_sla)
 from {{ ref('vw_daily_project_sla' ) }} vw_daily_project_sla
-where date_day >= current_date - 1
+where date_day >= current_date - 14
 and date_day <= current_date
 group by report_date, customer_id, project_type, source
 having not (min(response_sla_percent) = (
@@ -23,7 +23,7 @@ union
 select
 	report_date, customer_id, min(response_sla_percent), min(final_fix_sla_percent), sum(total_with_final_fix_sla), sum(total_final_fix_within_sla)
 from {{ ref('vw_daily_project_sla' ) }} vw_daily_project_sla
-where date_day >= current_date - 1
+where date_day >= current_date - 14
 and date_day <= current_date
 group by report_date, customer_id, project_type, source
 having not (min(final_fix_sla_percent) = (
@@ -43,7 +43,7 @@ union
 select
 	report_date, customer_id, min(response_sla_percent), min(final_fix_sla_percent), sum(total_with_final_fix_sla), sum(total_final_fix_within_sla)
 from {{ ref('vw_daily_project_sla' ) }} vw_daily_project_sla
-where date_day >= current_date - 1
+where date_day >= current_date - 14
 and date_day <= current_date
 group by report_date, customer_id, project_type, source
 having not (sum(total_with_final_fix_sla) = (
@@ -63,7 +63,7 @@ union
 select
 	report_date, customer_id, min(response_sla_percent), min(final_fix_sla_percent), sum(total_with_final_fix_sla), sum(total_final_fix_within_sla)
 from {{ ref('vw_daily_project_sla' ) }} vw_daily_project_sla
-where date_day >= current_date - 1
+where date_day >= current_date - 14
 and date_day <= current_date
 group by report_date, customer_id, project_type, source
 having not (sum(total_final_fix_within_sla) = (
