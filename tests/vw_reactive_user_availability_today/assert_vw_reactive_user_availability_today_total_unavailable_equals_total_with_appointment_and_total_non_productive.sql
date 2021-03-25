@@ -20,8 +20,10 @@ and not exists (select *
                     and fact_workitem.assigned_user_id = vw_reactive_user_availability_today.user_id
                     and current_stage not in ('Closed', 'Cancelled', 'RemoteClosed', 'Discarded', 'Rejected', 'Unassigned')
                     and template_display_name = 'Non-Productive Time')
-and not exists (  -- this query isn't correct, but the view has a problem at the moment
-	select *
-	from {{ ref('fact_user_assignment')}}
-	where to_timestamp is null
-	and reason = 'Maintenance')
+and not exists (select *
+                    from {{ ref('fact_user_assignment')}}
+                    where to_timestamp is null
+                    and fact_user_assignment.from_timestamp::date = current_date
+                    and fact_user_assignment.from_timestamp <= now()
+                    and fact_user_assignment.user_id = vw_reactive_user_availability_today.user_id
+                    and reason = 'Maintenance')

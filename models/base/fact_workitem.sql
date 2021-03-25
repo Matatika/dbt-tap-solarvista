@@ -96,7 +96,7 @@ fact_workitem as (
     where projects.status != 'Discarded'
 {% if is_incremental() %}
     -- this filter will only be applied on an incremental run
-    and workitems.last_modified > (select max(t2.last_modified) from {{ this }} as t2)
+    and workitems.last_modified >= (select max(t2.last_modified) from {{ this }} as t2)
 {% endif %}
 )
 select * from fact_workitem

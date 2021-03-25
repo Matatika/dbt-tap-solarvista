@@ -3,99 +3,112 @@
 with fact_user_assignment as (
 	select * from {{ ref('fact_user_assignment')}}
 ),
-fact_workitem as (
-	select * from {{ ref('fact_workitem')}}
-	where schedule_start_date = current_date
-),
 dim_user as (
 	select * from {{ ref('dim_user')}}
 ),
-user_reason_assigned as (
+reactive_assignable_users as (
 	select
-		distinct(fact_user_assignment.user_id) as user_id
+		*
+	from dim_user
+	where is_assignable = true
+	and is_reactive = true
+),
+current_reactive_user_assignments as (
+    select
+        fact_user_assignment.user_sk as user_sk
+		, fact_user_assignment.user_id as user_id
+		, fact_user_assignment.from_timestamp as from_timestamp
+		, fact_user_assignment.to_timestamp as to_timestamp
+		, fact_user_assignment.appointment_id as appointment_id
+		, fact_user_assignment.work_item_id as work_item_id
+		, fact_user_assignment.reason as reason
+		, fact_user_assignment.scheduled_to_time as scheduled_to_time
 		, dim_user.display_name as display_name
 		, dim_user.email as email
-		, 'Assigned' as current_availability
-		, fact_user_assignment.reason as reason
-	from fact_user_assignment
+    from fact_user_assignment
 	left join dim_user on dim_user.users_sk = fact_user_assignment.user_sk
-	where dim_user.is_reactive = true
-	and dim_user.is_assignable = true
-	and fact_user_assignment.from_timestamp::date = current_date
-	and fact_user_assignment.from_timestamp <= now()
-	and fact_user_assignment.to_timestamp isnull
-	and fact_user_assignment.appointment_id isnull
-	and fact_user_assignment.reason not in ('Maintenance', 'Non Productive')
+    where from_timestamp::date = current_date
+    and from_timestamp <= now()
+    and to_timestamp isnull
+    and fact_user_assignment.user_id in (select reactive_assignable_users.user_id from reactive_assignable_users)
+),
+next_available as (
+	-- Selects distinct user based on the outer join where we get the maximum scheduled_to_time
+	-- (We outer join so we have to "where" b.user_id isnull)
+	select
+		distinct on (a.user_sk) a.user_sk
+		, a.user_id as user_id
+		, a.from_timestamp as from_timestamp
+		, a.to_timestamp as to_timestamp
+		, a.appointment_id as appointment_id
+		, a.work_item_id as work_item_id
+		, a.reason as reason
+		, a.scheduled_to_time as scheduled_to_time
+		, a.display_name as display_name
+		, a.email as email
+	from current_reactive_user_assignments a
+	left outer join current_reactive_user_assignments b 
+		on a.user_id = b.user_id 
+		and a.scheduled_to_time < b.scheduled_to_time
+	where b.user_id isnull
+),
+user_reason_assigned as (
+	select
+		next_available.user_id as user_id
+		, next_available.display_name as display_name
+		, next_available.email as email
+		, 'Assigned' as current_availability
+		, next_available.reason as reason
+		, next_available.scheduled_to_time as scheduled_to_time
+	from next_available
+	where next_available.appointment_id isnull
+	and next_available.reason != 'Maintenance'
 ),
 user_reason_unavailable as (
 	select
-		distinct(fact_user_assignment.user_id) as user_id
-		, dim_user.display_name as display_name
-		, dim_user.email as email
+		next_available.user_id as user_id
+		, next_available.display_name as display_name
+		, next_available.email as email
 		, 'Unavailable' as current_availability
-		, fact_user_assignment.reason as reason
-	from fact_user_assignment
-	left join dim_user on dim_user.users_sk = fact_user_assignment.user_sk
-	where dim_user.is_reactive = true
-	and dim_user.is_assignable = true
-	and fact_user_assignment.from_timestamp::date = current_date
-	and fact_user_assignment.to_timestamp isnull
-	and fact_user_assignment.appointment_id notnull
-	and fact_user_assignment.user_id not in (select user_id from user_reason_assigned)
+		, next_available.reason as reason
+		, next_available.scheduled_to_time as scheduled_to_time
+	from next_available
+	where next_available.appointment_id notnull
 ),
 user_reason_non_productive as (
 	select
-		distinct(fact_user_assignment.user_id) as user_id
-		, dim_user.display_name as display_name
-		, dim_user.email as email
+		next_available.user_id as user_id
+		, next_available.display_name as display_name
+		, next_available.email as email
 		, 'Unavailable' as current_availability
-		, fact_user_assignment.reason as reason
-	from fact_user_assignment
-	left join dim_user on dim_user.users_sk = fact_user_assignment.user_sk
-	where dim_user.is_reactive = true
-	and dim_user.is_assignable = true
-	and fact_user_assignment.from_timestamp::date = current_date
-	and fact_user_assignment.from_timestamp <= now()
-	and fact_user_assignment.to_timestamp isnull
-	and fact_user_assignment.appointment_id isnull
-	and fact_user_assignment.reason = 'Non Productive'
-	and fact_user_assignment.user_id not in (select user_id from user_reason_assigned
-											union
-											select user_id from user_reason_unavailable)
+		, next_available.reason as reason
+		, next_available.scheduled_to_time as scheduled_to_time
+	from next_available
+	where next_available.appointment_id isnull
+	and next_available.reason = 'Non Productive'
 ),
 user_reason_unavailable_due_to_maintenance as (
 	select
-		distinct(fact_user_assignment.user_id) as user_id
-		, dim_user.display_name as display_name
-		, dim_user.email as email
+		next_available.user_id as user_id
+		, next_available.display_name as display_name
+		, next_available.email as email
 		, 'Unavailable' as current_availability
-		, fact_user_assignment.reason as reason
-	from fact_user_assignment
-	left join dim_user on dim_user.users_sk = fact_user_assignment.user_sk
-	where dim_user.is_reactive = true
-	and dim_user.is_assignable = true
-	and fact_user_assignment.from_timestamp <= now()
-	and fact_user_assignment.to_timestamp isnull
-	and fact_user_assignment.appointment_id isnull
-	and fact_user_assignment.reason = 'Maintenance'
-	and fact_user_assignment.user_id not in (select user_id from user_reason_assigned
-											union
-											select user_id from user_reason_unavailable
-											union
-											select user_id from user_reason_non_productive)
+		, next_available.reason as reason
+		, next_available.scheduled_to_time as scheduled_to_time
+	from next_available
+	where next_available.appointment_id isnull
+	and next_available.reason = 'Maintenance'
 ),
 user_reason_unassigned as (
 	select
-		distinct(fact_user_assignment.user_id) as user_id
-		, dim_user.display_name as display_name
-		, dim_user.email as email
+		reactive_assignable_users.user_id as user_id
+		, reactive_assignable_users.display_name as display_name
+		, reactive_assignable_users.email as email
 		, 'Unassigned' as current_availability
 		, 'Nothing Scheduled Now' as reason
-	from fact_user_assignment
-	left join dim_user on dim_user.users_sk = fact_user_assignment.user_sk
-	where dim_user.is_reactive = true
-	and dim_user.is_assignable = true
-	and fact_user_assignment.user_id not in (select user_id from user_reason_unavailable_due_to_maintenance
+		, NULL::timestamp as scheduled_to_time
+	from reactive_assignable_users
+	where reactive_assignable_users.user_id not in (select user_id from user_reason_unavailable_due_to_maintenance
 												union
 												select user_id from user_reason_non_productive
 												union
@@ -115,3 +128,4 @@ final as (
 	select * from user_reason_unassigned
 )
 select * from final
+order by current_availability
