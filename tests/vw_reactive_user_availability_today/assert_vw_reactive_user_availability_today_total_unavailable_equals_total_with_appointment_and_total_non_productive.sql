@@ -24,6 +24,6 @@ and not exists (select *
                     from {{ ref('fact_user_assignment')}}
                     where to_timestamp is null
                     and fact_user_assignment.from_timestamp::date = current_date
-                    and fact_user_assignment.from_timestamp <= now()
+                    and fact_user_assignment.from_tgit simestamp <= now()
                     and fact_user_assignment.user_id = vw_reactive_user_availability_today.user_id
                     and reason in ('Maintenance', 'Non Productive'))
