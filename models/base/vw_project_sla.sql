@@ -50,6 +50,18 @@ project_reactivated as (
 project_sla as (
     select
         projects.project_sk
+        , min(projects.createdon)
+        , count(distinct projects.reference) as total_projects
+
+        , min(workitems.customer_sk) as customer_sk
+        , min(workitems.site_sk) as site_sk
+        , min(workitems.territory_sk) as territory_sk
+        , min(workitems.schedule_start_date) as schedule_start_date
+        , min(project_reactivated.ValueDate) as reactivated_timestamp
+        , min(workitem_stages.remoteclosed_timestamp) as remoteclosed_timestamp
+        , min(workitem_stages.cancelled_timestamp) as cancelled_timestamp
+        , min(workitem_stages.preworking_timestamp) as preworking_timestamp
+
         , (case
              -- Use PreWorking time as first response or closedon
              when min(workitem_stages.preworking_timestamp) is not null 
@@ -80,44 +92,20 @@ project_sla as (
 	    , (case 
 		     when min(projects.status) = 'Cancelled' then 1 
 		 end) as is_cancelled
+		, (case 
+            when min(project_reactivated.ValueDate) is null then 1 else 0
+         end) as is_firstfix
+		, (case 
+            when min(project_reactivated.ValueDate) is not null then 1 else 0
+         end) as is_refix
     from projects
         left join workitems
             on workitems.project_sk = projects.project_sk
         left join workitem_stages
             on workitem_stages.work_item_id = workitems.work_item_id
-    group by projects.project_sk
-),
-
-project_stages as (
-    select
-        projects.project_sk,
-        min(projects.createdon),
-        count(distinct projects.reference) as total_projects,
-
-        min(workitems.customer_sk) as customer_sk,
-        min(workitems.site_sk) as site_sk,
-        min(workitems.territory_sk) as territory_sk,
-        min(workitems.schedule_start_date) as schedule_start_date,
-        min(project_reactivated.ValueDate) as reactivated_timestamp,
-        min(workitem_stages.remoteclosed_timestamp) as remoteclosed_timestamp,
-        min(workitem_stages.cancelled_timestamp) as cancelled_timestamp,
-        min(workitem_stages.preworking_timestamp) as preworking_timestamp,
-
-		(case 
-            when min(project_reactivated.ValueDate) is null then 1 else 0
-         end) as is_firstfix,
-		(case 
-            when min(project_reactivated.ValueDate) is not null then 1 else 0
-         end) as is_refix
-
-    from projects
-        left join workitems
-            on workitems.project_sk = projects.project_sk
-        left join workitem_stages using (work_item_id)
         left join project_workitem_active on project_workitem_active.project_id = projects.reference
         left join project_reactivated on project_reactivated.project_id = projects.reference
     group by projects.project_sk
-            
 ),
 
 stats as (
@@ -189,8 +177,6 @@ stats as (
     from projects
         left join project_sla
             on project_sla.project_sk = projects.project_sk
-        left join project_stages
-            on project_stages.project_sk = projects.project_sk
         left join project_workitem_count on project_workitem_count.project_id = projects.reference
         left join project_workitem_active on project_workitem_active.project_id = projects.reference
             
