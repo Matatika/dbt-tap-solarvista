@@ -2,19 +2,19 @@ with workitems as (
     select * from {{ ref('fact_workitem') }}
 ),
 workitem_stages as (
-     select distinct * from {{ ref('fact_workitem_stages') }} 
+     select * from {{ ref('fact_workitem_stages') }} 
 ),
 projects as (
-     select distinct * from {{ ref('dim_project') }} 
+     select * from {{ ref('dim_project') }} 
 ),
 customers as (
-     select distinct * from {{ ref('dim_customer') }}
+     select * from {{ ref('dim_customer') }}
 ),
 sites as (
-     select distinct * from {{ ref('dim_site') }}
+     select * from {{ ref('dim_site') }}
 ),
 territories as (
-     select distinct * from {{ ref('dim_territory') }}
+     select * from {{ ref('dim_territory') }}
 ),
 dates as (
     select * from {{ ref('dim_date') }}
@@ -91,7 +91,7 @@ project_sla as (
 project_stages as (
     select
         projects.project_sk,
-        projects.createdon,
+        min(projects.createdon),
         count(distinct projects.reference) as total_projects,
 
         min(workitems.customer_sk) as customer_sk,
@@ -116,7 +116,7 @@ project_stages as (
         left join workitem_stages using (work_item_id)
         left join project_workitem_active on project_workitem_active.project_id = projects.reference
         left join project_reactivated on project_reactivated.project_id = projects.reference
-    group by projects.project_sk, projects.createdon
+    group by projects.project_sk
             
 ),
 

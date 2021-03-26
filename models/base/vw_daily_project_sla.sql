@@ -128,7 +128,7 @@ project_stats as (
         date_day, customer_id, project_type, source
 
         -- projects created on a given date
-        , count(distinct reference) as total_created
+        , count(reference) as total_created
         , sum(case when appliedresponsesla is not null then 1 else 0 end) as total_with_response_sla
         , sum(case when appliedfixsla is not null then 1 else 0 end) as total_with_final_fix_sla
 
