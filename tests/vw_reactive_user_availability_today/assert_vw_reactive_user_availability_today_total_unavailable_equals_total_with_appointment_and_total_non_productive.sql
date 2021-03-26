@@ -11,7 +11,7 @@ and not exists (select *
                     from {{ ref('fact_appointment')}} as fact_appointment
                     where "start"::date = current_date
                     and "start" <= now()
-                    and "end" > now()
+--                    and "end" > now()
                     and fact_appointment.user_id = vw_reactive_user_availability_today.user_id)
 and not exists (select *
                     from {{ ref('fact_workitem')}} as fact_workitem
