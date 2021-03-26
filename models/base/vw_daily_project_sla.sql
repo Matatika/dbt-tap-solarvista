@@ -64,7 +64,9 @@ project_sla as (
                         then max(workitem_stages.closed_timestamp)
                     when min(workitems.created_on) is not null
                         then min(workitems.created_on)
-                        else min(projects.createdon)
+                    when min(projects.createdon) is not null
+                        then min(projects.createdon)
+                        else min(projects.last_modified) 
                 end
 		 end) as finalfix_date
 
@@ -80,7 +82,8 @@ project_sla as (
     from projects
         left join workitems
             on workitems.project_sk = projects.project_sk
-        left join workitem_stages using (work_item_id)
+        left join workitem_stages
+            on workitem_stages.work_item_id = workitems.work_item_id
     group by projects.project_sk
 ),
 
@@ -125,7 +128,7 @@ project_stats as (
         date_day, customer_id, project_type, source
 
         -- projects created on a given date
-        , count(distinct reference) as total_created
+        , count(reference) as total_created
         , sum(case when appliedresponsesla is not null then 1 else 0 end) as total_with_response_sla
         , sum(case when appliedfixsla is not null then 1 else 0 end) as total_with_final_fix_sla
 
@@ -151,7 +154,6 @@ project_stats as (
             when projects.appliedfixsla is null then 0
             when projects.fixduedate is null then 0
             when is_cancelled = 1 then 1
-            when projects.fixduedate is null then 1
             when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} <= 0 then 1
             when {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} <= 0 then 1
             else 0

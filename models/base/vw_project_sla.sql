@@ -2,19 +2,19 @@ with workitems as (
     select * from {{ ref('fact_workitem') }}
 ),
 workitem_stages as (
-     select distinct * from {{ ref('fact_workitem_stages') }} 
+     select * from {{ ref('fact_workitem_stages') }} 
 ),
 projects as (
-     select distinct * from {{ ref('dim_project') }} 
+     select * from {{ ref('dim_project') }} 
 ),
 customers as (
-     select distinct * from {{ ref('dim_customer') }}
+     select * from {{ ref('dim_customer') }}
 ),
 sites as (
-     select distinct * from {{ ref('dim_site') }}
+     select * from {{ ref('dim_site') }}
 ),
 territories as (
-     select distinct * from {{ ref('dim_territory') }}
+     select * from {{ ref('dim_territory') }}
 ),
 dates as (
     select * from {{ ref('dim_date') }}
@@ -47,29 +47,29 @@ project_reactivated as (
     group by projects.reference
 ),
 
-project_stages as (
+project_sla as (
     select
-        distinct projects.reference as project_id,
-        projects.createdon,
-        count(distinct projects.reference) as total_projects,
+        projects.project_sk
+        , min(projects.createdon)
+        , count(distinct projects.reference) as total_projects
 
-        min(workitems.project_sk) as project_sk,
-        min(workitems.customer_sk) as customer_sk,
-        min(workitems.site_sk) as site_sk,
-        min(workitems.territory_sk) as territory_sk,
-        min(workitems.schedule_start_date) as schedule_start_date,
-        min(project_reactivated.ValueDate) as reactivated_timestamp,
-        min(workitem_stages.remoteclosed_timestamp) as remoteclosed_timestamp,
-        min(workitem_stages.cancelled_timestamp) as cancelled_timestamp,
-        min(workitem_stages.preworking_timestamp) as preworking_timestamp,
-        (case
+        , min(workitems.customer_sk) as customer_sk
+        , min(workitems.site_sk) as site_sk
+        , min(workitems.territory_sk) as territory_sk
+        , min(workitems.schedule_start_date) as schedule_start_date
+        , min(project_reactivated.ValueDate) as reactivated_timestamp
+        , min(workitem_stages.remoteclosed_timestamp) as remoteclosed_timestamp
+        , min(workitem_stages.cancelled_timestamp) as cancelled_timestamp
+        , min(workitem_stages.preworking_timestamp) as preworking_timestamp
+
+        , (case
              -- Use PreWorking time as first response or closedon
              when min(workitem_stages.preworking_timestamp) is not null 
                 then min(workitem_stages.preworking_timestamp)
                 else min(projects.closedon)
-         end ) as firstresponse_date,
+         end ) as firstresponse_date
         -- Try to get a finalfix_date and calculate final fix SLAs in the face of bad data
-        (case
+        , (case
              when min(projects.closedon) is not null then min(projects.closedon)
              when min(projects.status) != 'Active' then
                 case
@@ -77,33 +77,35 @@ project_stages as (
                         then max(workitem_stages.closed_timestamp)
                     when min(workitems.created_on) is not null
                         then min(workitems.created_on)
-                        else min(projects.createdon)
+                    when min(projects.createdon) is not null
+                        then min(projects.createdon)
+                        else min(projects.last_modified) 
                 end
-		 end) as finalfix_date,
+		 end) as finalfix_date
 
-	    (case 
+	    , (case 
 		     when min(projects.status) = 'Active' then 1 else 0
-		 end) as is_open,
-        (case
+		 end) as is_open
+        , (case
 		     when min(projects.status) = 'Active' then 0 else 1 
-		 end) as is_closed,
-	    (case 
+		 end) as is_closed
+	    , (case 
 		     when min(projects.status) = 'Cancelled' then 1 
-		 end) as is_cancelled,
-		(case 
+		 end) as is_cancelled
+		, (case 
             when min(project_reactivated.ValueDate) is null then 1 else 0
-         end) as is_firstfix,
-		(case 
+         end) as is_firstfix
+		, (case 
             when min(project_reactivated.ValueDate) is not null then 1 else 0
          end) as is_refix
-
-    from workitems
-        left outer join projects on projects.project_sk = workitems.project_sk
-        left outer join workitem_stages on workitem_stages.work_item_id = workitems.work_item_id
-        left outer join project_workitem_active on project_workitem_active.project_id = projects.reference
-        left outer join project_reactivated on project_reactivated.project_id = projects.reference
-    group by projects.reference, projects.createdon
-            
+    from projects
+        left join workitems
+            on workitems.project_sk = projects.project_sk
+        left join workitem_stages
+            on workitem_stages.work_item_id = workitems.work_item_id
+        left join project_workitem_active on project_workitem_active.project_id = projects.reference
+        left join project_reactivated on project_reactivated.project_id = projects.reference
+    group by projects.project_sk
 ),
 
 stats as (
@@ -154,28 +156,29 @@ stats as (
             else 0
          end) as response_missed_sla,
         -- Compute "Final Fix" SLA by comparing project 'fixduedate' with project 'finalfix_date'
-        {{ dbt_utils.datediff('projects.fixduedate', 'project_stages.finalfix_date', 'hour') }} as final_fix_hours,
+        {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} as final_fix_hours,
 		(case 
             when projects.appliedfixsla is null then 0
             when projects.fixduedate is null then 0
             when is_cancelled = 1 then 1
-            when project_stages.finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} <= 0 then 1
-            when {{ dbt_utils.datediff('projects.fixduedate', 'project_stages.finalfix_date', 'hour') }} <= 0 then 1
+            when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} <= 0 then 1
+            when {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} <= 0 then 1
             else 0
          end) as final_fix_within_sla,
 		(case 
             when projects.appliedfixsla is null then 0
             when projects.fixduedate is null then 0
             when is_cancelled = 1 then 0
-            when project_stages.finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} > 0 then 1
-            when {{ dbt_utils.datediff('projects.fixduedate', 'project_stages.finalfix_date', 'hour') }} > 0 then 1
+            when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} > 0 then 1
+            when {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} > 0 then 1
             else 0
          end) as final_fix_missed_sla
 
-    from project_stages
-        left outer join projects on projects.project_sk = project_stages.project_sk
-        left outer join project_workitem_count on project_workitem_count.project_id = projects.reference
-        left outer join project_workitem_active on project_workitem_active.project_id = projects.reference
+    from projects
+        left join project_sla
+            on project_sla.project_sk = projects.project_sk
+        left join project_workitem_count on project_workitem_count.project_id = projects.reference
+        left join project_workitem_active on project_workitem_active.project_id = projects.reference
             
 ),
 

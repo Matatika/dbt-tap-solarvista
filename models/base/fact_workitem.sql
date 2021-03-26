@@ -97,7 +97,10 @@ fact_workitem as (
     left join sites on sites.reference = workitems.properties_site_id
     left join customers on customers.reference = workitems.properties_customer_id
 	left join project_stream on project_stream.reference = workitems.properties_project_id
-    where (project_stream.status is null or project_stream.status != 'Discarded')
+    where (
+        workitems.properties_project_id is null -- load work items without projects (ad hoc work items)
+        or project_stream.status != 'Discarded'  -- do not load work items from discarded projects
+    )
 {% if is_incremental() %}
     -- this filter will only be applied on an incremental run
     and workitems.last_modified >= (select max(t2.last_modified) from {{ this }} as t2)
