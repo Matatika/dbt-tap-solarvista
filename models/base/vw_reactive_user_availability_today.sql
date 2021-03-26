@@ -62,7 +62,7 @@ user_reason_assigned as (
 		, next_available.scheduled_to_time as scheduled_to_time
 	from next_available
 	where next_available.appointment_id isnull
-	and next_available.reason != 'Maintenance'
+	and next_available.reason not in ('Maintenance', 'Non Productive')
 ),
 user_reason_unavailable as (
 	select

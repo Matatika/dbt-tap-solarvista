@@ -17,7 +17,6 @@ dim_project_snapshot as (
         {{ dbt_utils.surrogate_key(['reference']) }} as project_sk,
         *
     from projects
-    where status != 'Discarded'
 )
 select * from dim_project_snapshot
 {% endsnapshot %}

@@ -10,8 +10,8 @@ select
     , source
     , sum(total_with_final_fix_sla) "total_with_final_fix_sla"
 from {{ ref('vw_daily_project_sla' ) }} vw_daily_project_sla
-where report_date >= current_date - 1  -- works for all dates, but this selection reduces the test execution time
-and report_date <= current_date
+where report_date >= current_date - 3  -- works for all dates, but this selection reduces the test execution time
+and report_date < current_date
 group by report_date, customer_id, project_type, source
 having not(sum(total_with_final_fix_sla) = (
 		select
@@ -32,8 +32,8 @@ select
     , source
     , sum(total_final_fix_within_sla) "total_final_fix_within_sla"
 from {{ ref('vw_daily_project_sla' ) }} vw_daily_project_sla
-where report_date >= current_date - 1  -- works for all dates, but this selection reduces the test execution time
-and report_date <= current_date
+where report_date >= current_date - 3  -- works for all dates, but this selection reduces the test execution time
+and report_date < current_date
 group by report_date, customer_id, project_type, source
 having not(sum(total_final_fix_within_sla) = (
 		select
