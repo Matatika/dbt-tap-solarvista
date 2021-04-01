@@ -117,8 +117,8 @@ stats as (
         EXTRACT(DAY FROM projects.createdon)::integer as report_day,
 
         projects.project_sk,
-        customer_sk,
-        site_sk,
+        customer_id,
+        site_id,
         territory_sk,
         schedule_start_date,
         reactivated_timestamp,
@@ -235,11 +235,10 @@ final as (
         projects.source
 
     from stats
-        left outer join dates on dates.date_day = stats.report_date
-        left outer join projects on projects.project_sk = stats.project_sk
-        left outer join customers on customers.customer_sk = stats.customer_sk
-        left outer join sites on sites.site_sk = stats.site_sk
-        left outer join territories on territories.territory_sk = stats.territory_sk
-    where stats.project_id is not null
+        left join dates on dates.date_day = stats.report_date
+        left join projects on projects.project_sk = stats.project_sk
+        left join customers on customers.reference = stats.customer_id
+        left join sites on sites.reference = stats.site_id
+        left join territories on territories.territory_sk = stats.territory_sk
 )
 select * from final
