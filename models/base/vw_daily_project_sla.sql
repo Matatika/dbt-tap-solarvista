@@ -129,12 +129,11 @@ project_stats as (
 
         -- projects created on a given date
         , count(reference) as total_created
-        , sum(case when appliedresponsesla is not null then 1 else 0 end) as total_with_response_sla
-        , sum(case when appliedfixsla is not null then 1 else 0 end) as total_with_final_fix_sla
+        , sum(case when responseduedate is not null then 1 else 0 end) as total_with_response_sla
+        , sum(case when fixduedate is not null then 1 else 0 end) as total_with_final_fix_sla
 
         -- Compute "Response" SLA by comparing project 'responseduedate' with 'PreWorking' stage
 		, sum((case
-            when projects.appliedresponsesla is null then 0
             when projects.responseduedate is null then 0
             when is_cancelled = 1 then 1 
             when firstresponse_date is null and {{ dbt_utils.datediff('projects.responseduedate', 'now()', 'hour') }} <= 0 then 1
@@ -142,7 +141,6 @@ project_stats as (
             else 0
          end)) as response_within_sla
 		, sum((case
-            when projects.appliedresponsesla is null then 0
             when projects.responseduedate is null then 0
             when is_cancelled = 1 then 0
             when firstresponse_date is null and {{ dbt_utils.datediff('projects.responseduedate', 'now()', 'hour') }} > 0 then 1
@@ -151,7 +149,6 @@ project_stats as (
          end)) as response_missed_sla
         -- Compute "Final Fix" SLA by comparing project 'fixduedate' with project 'finalfix_date'
 		, sum((case
-            when projects.appliedfixsla is null then 0
             when projects.fixduedate is null then 0
             when is_cancelled = 1 then 1
             when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} <= 0 then 1
@@ -159,7 +156,6 @@ project_stats as (
             else 0
          end)) as final_fix_within_sla
 		, sum((case
-            when projects.appliedfixsla is null then 0
             when projects.fixduedate is null then 0
             when is_cancelled = 1 then 0
             when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} > 0 then 1

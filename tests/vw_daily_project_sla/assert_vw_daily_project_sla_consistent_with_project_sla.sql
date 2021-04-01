@@ -14,7 +14,6 @@ having not (min(response_sla_percent) = (
 		AND project_sla.report_date = vw_daily_project_sla.report_date
 		AND project_sla.project_type = vw_daily_project_sla.project_type
 		AND project_sla.source = vw_daily_project_sla.source
-		AND NOT project_sla.appliedresponsesla IS NULL
 		AND NOT project_sla.responseduedate IS NULL 
 		GROUP BY project_sla.report_date
 	)
@@ -34,7 +33,6 @@ having not (min(final_fix_sla_percent) = (
 		AND project_sla.report_date = vw_daily_project_sla.report_date
 		AND project_sla.project_type = vw_daily_project_sla.project_type
 		AND project_sla.source = vw_daily_project_sla.source
-		AND NOT project_sla.appliedfixsla IS NULL
 		AND NOT project_sla.fixduedate IS NULL 
 		GROUP BY project_sla.report_date
 	)
@@ -54,7 +52,6 @@ having not (sum(total_with_final_fix_sla) = (
 		AND project_sla.report_date = vw_daily_project_sla.report_date
 		AND project_sla.project_type = vw_daily_project_sla.project_type
 		AND project_sla.source = vw_daily_project_sla.source
-		AND NOT project_sla.appliedfixsla IS NULL
 		AND NOT project_sla.fixduedate IS NULL 
 		GROUP BY project_sla.report_date
 	)
@@ -74,7 +71,6 @@ having not (sum(total_final_fix_within_sla) = (
 		AND project_sla.report_date = vw_daily_project_sla.report_date
 		AND project_sla.project_type = vw_daily_project_sla.project_type
 		AND project_sla.source = vw_daily_project_sla.source
-		AND NOT project_sla.appliedfixsla IS NULL
 		AND NOT project_sla.fixduedate IS NULL 
 		GROUP BY project_sla.report_date
 	)

@@ -7,8 +7,7 @@ select
     project_id,
     0
 from {{ ref('vw_project_sla' )}}
-where appliedresponsesla is not null
-and responseduedate is not null
+where responseduedate is not null
 and response_within_sla = 0
 and response_missed_sla = 0
 union
@@ -16,7 +15,6 @@ select
     project_id,
     sum(response_within_sla) + sum(response_missed_sla) as total_within_missed
 from {{ ref('vw_project_sla' )}}
-where appliedresponsesla is not null
-and responseduedate is not null
+where responseduedate is not null
 group by 1
 having not(sum(response_within_sla) + sum(response_missed_sla) = 1)

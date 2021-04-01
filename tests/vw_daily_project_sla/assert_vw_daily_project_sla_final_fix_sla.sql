@@ -21,7 +21,7 @@ having not(sum(total_with_final_fix_sla) = (
 		and dim_project.customer_id = vw_daily_project_sla.customer_id
 		and dim_project.project_type = vw_daily_project_sla.project_type
 		and dim_project.source = vw_daily_project_sla.source
-		and appliedfixsla is not null
+		and fixduedate is not null
 	)
 )
 union
@@ -38,7 +38,6 @@ group by report_date, customer_id, project_type, source
 having not(sum(total_final_fix_within_sla) = (
 		select
 			sum(case 
-	            when dim_project.appliedfixsla is null then 0
 	            when dim_project.fixduedate is null then 0
 	            when is_cancelled = 1 then 1 
 	            when finalfix_date is null and 

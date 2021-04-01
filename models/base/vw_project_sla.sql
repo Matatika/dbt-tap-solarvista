@@ -140,7 +140,6 @@ stats as (
         -- Compute "Response" SLA by comparing project 'responseduedate' with 'PreWorking' stage
         {{ dbt_utils.datediff('responseduedate', 'firstresponse_date', 'hour') }} as response_hours,
 		(case 
-            when projects.appliedresponsesla is null then 0
             when projects.responseduedate is null then 0
             when is_cancelled = 1 then 1 
             when firstresponse_date is null and {{ dbt_utils.datediff('projects.responseduedate', 'now()', 'hour') }} <= 0 then 1
@@ -148,7 +147,6 @@ stats as (
             else 0
          end) as response_within_sla,
 		(case 
-            when projects.appliedresponsesla is null then 0
             when projects.responseduedate is null then 0
             when is_cancelled = 1 then 0
             when firstresponse_date is null and {{ dbt_utils.datediff('projects.responseduedate', 'now()', 'hour') }} > 0 then 1
@@ -158,7 +156,6 @@ stats as (
         -- Compute "Final Fix" SLA by comparing project 'fixduedate' with project 'finalfix_date'
         {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} as final_fix_hours,
 		(case 
-            when projects.appliedfixsla is null then 0
             when projects.fixduedate is null then 0
             when is_cancelled = 1 then 1
             when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} <= 0 then 1
@@ -166,7 +163,6 @@ stats as (
             else 0
          end) as final_fix_within_sla,
 		(case 
-            when projects.appliedfixsla is null then 0
             when projects.fixduedate is null then 0
             when is_cancelled = 1 then 0
             when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} > 0 then 1

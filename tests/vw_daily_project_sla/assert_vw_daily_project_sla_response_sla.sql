@@ -21,7 +21,7 @@ having not(sum(total_with_response_sla) = (
 		and dim_project.customer_id = vw_daily_project_sla.customer_id
 		and dim_project.project_type = vw_daily_project_sla.project_type
 		and dim_project.source = vw_daily_project_sla.source
-		and appliedresponsesla is not null
+		and responseduedate is not null
 	)
 )
 union
@@ -38,7 +38,6 @@ group by report_date, customer_id, project_type, source
 having not(sum(total_response_within_sla) = (
 		select
 			sum(case 
-	            when dim_project.appliedresponsesla is null then 0
 	            when dim_project.responseduedate is null then 0
 	            when is_cancelled = 1 then 1 
 	            when firstresponse_date is null and 
