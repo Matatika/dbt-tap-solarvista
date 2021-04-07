@@ -10,10 +10,7 @@
 }}
 
 with workitems as (
-    select * from "{{var('schema')}}".workitem_stream
-),
-project_stream as (
-    select * from "{{var('schema')}}".project_stream
+    select * from "{{var('schema')}}".stg_workitem_stream
 ),
 customers as (
     select * from {{ ref('dim_customer') }}
@@ -96,14 +93,10 @@ fact_workitem as (
     left join territories on territories.reference = workitems.properties_territories_id
     left join sites on sites.reference = workitems.properties_site_id
     left join customers on customers.reference = workitems.properties_customer_id
-	left join project_stream on project_stream.reference = workitems.properties_project_id
-    where (
-        workitems.properties_project_id is null -- load work items without projects (ad hoc work items)
-        or project_stream.status != 'Discarded'  -- do not load work items from discarded projects
-    )
 {% if is_incremental() %}
     -- this filter will only be applied on an incremental run
-    and workitems.last_modified >= (select max(t2.last_modified) from {{ this }} as t2)
+    where workitems.last_modified >= (select max(t2.last_modified) from {{ this }} as t2)
+    or not exists (select reference from {{ this }} as t2 where t2.work_item_id = workitems.work_item_id)
 {% endif %}
 )
 select * from fact_workitem
