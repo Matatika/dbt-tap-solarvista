@@ -5,7 +5,7 @@
 -- Assert that vw_reactive_user_availability_today return no other results
 select
     user_id
-from {{ ref('vw_reactive_user_availability_today')}} as vw_reactive_user_availability_today
+from {{ ref('vw_reactive_user_availability_today_old')}} as vw_reactive_user_availability_today
 where current_availability = 'Unavailable'
 and not exists (select *
                     from {{ ref('fact_appointment')}} as fact_appointment
