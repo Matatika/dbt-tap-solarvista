@@ -32,6 +32,7 @@ users_with_appointments as (
         , case when fact_appointment."end" > now() then NULL else fact_appointment."end" end as to_timestamp
         , fact_appointment.appointment_id as appointment_id
         , NULL as work_item_id
+        , 'Appointment' as template_display_name
         , fact_appointment.label as reason
         , fact_appointment."end" as scheduled_to_time
     from fact_appointment
@@ -46,6 +47,7 @@ users_with_work_items_not_non_productive as (
         else fact_workitem.last_modified end as to_timestamp
         , NULL as appointment_id
         , fact_workitem.work_item_id as work_item_id
+        , fact_workitem.template_display_name as template_display_name
         , dim_project.project_type as reason
         , fact_workitem.schedule_start_time + (fact_workitem.schedule_duration_minutes * interval '1' minute) as scheduled_to_time
     from fact_workitem
@@ -65,6 +67,7 @@ users_with_non_productive_work_item as (
         else fact_workitem.last_modified end as to_timestamp
         , NULL as appointment_id
         , fact_workitem.work_item_id as work_item_id
+        , fact_workitem.template_display_name as template_display_name
         , 'Non Productive' as reason
         , fact_workitem.schedule_start_time + (fact_workitem.schedule_duration_minutes * interval '1' minute) as scheduled_to_time
     from fact_workitem

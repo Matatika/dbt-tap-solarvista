@@ -2,7 +2,7 @@
 -- where the scheduled start_time <= now for today
 select
     user_id
-from {{ ref('vw_reactive_user_availability_today')}}
+from {{ ref('vw_reactive_user_availability_today_old')}}
 where current_availability = 'assigned'
 and not exists (select assigned_user_id
                     from {{ ref('fact_workitem')}}
