@@ -29,7 +29,7 @@ current_reactive_user_assignments as (
     from fact_user_assignment
 	left join dim_user on dim_user.users_sk = fact_user_assignment.user_sk
     where from_timestamp::date = current_date
-    and from_timestamp <= now()
+    and from_timestamp <= now() AT TIME ZONE 'BST'
     and to_timestamp isnull
     and fact_user_assignment.user_id in (select reactive_assignable_users.user_id from reactive_assignable_users)
 ),

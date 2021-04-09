@@ -29,7 +29,7 @@ users_with_appointments as (
         fact_appointment.user_sk as user_sk
         , fact_appointment.user_id as user_id
         , fact_appointment."start" as from_timestamp
-        , case when fact_appointment."end" > now() then NULL else fact_appointment."end" end as to_timestamp
+        , case when fact_appointment."end" > now() AT TIME ZONE 'BST' then NULL else fact_appointment."end" end as to_timestamp
         , fact_appointment.appointment_id as appointment_id
         , NULL as work_item_id
         , 'Appointment' as template_display_name
