@@ -10,7 +10,7 @@ and scheduled_to_time not in (select
                             left join {{ ref('dim_user')}} on dim_user.user_id = fact_user_assignment.user_id
                             where fact_user_assignment.user_id = vw_reactive_user_availability_today.user_id
                             and from_timestamp::date = current_date
-                            and from_timestamp <= now()
+                            and from_timestamp <= now() AT TIME ZONE 'BST'
                             and to_timestamp isnull
                             and dim_user.is_assignable = true
                             and dim_user.is_reactive = true

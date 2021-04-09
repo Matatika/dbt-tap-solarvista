@@ -9,7 +9,7 @@ and template_display_name notnull
 and not exists (select assigned_user_id
                     from {{ ref('fact_workitem')}}
                     where schedule_start_date = current_date
-                    and schedule_start_time <= now()
+                    and schedule_start_time <= now() AT TIME ZONE 'BST'
                     and assigned_user_id = user_id
                     and current_stage not in ('Closed', 'Cancelled', 'RemoteClosed', 'Discarded', 'Rejected', 'Unassigned')
                     and template_display_name != 'Work Order / PPM')
