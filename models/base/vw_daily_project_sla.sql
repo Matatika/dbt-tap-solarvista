@@ -46,47 +46,6 @@ workitem_stages as (
     select * from {{ ref('fact_workitem_stages') }}
 ),
 
-project_sla as (
-    select
-        projects.project_sk
-        , (case
-             -- Use PreWorking time as first response or closedon
-             when min(workitem_stages.preworking_timestamp) is not null 
-                then min(workitem_stages.preworking_timestamp)
-                else min(projects.closedon)
-         end ) as firstresponse_date
-        -- Try to get a finalfix_date and calculate final fix SLAs in the face of bad data
-        , (case
-             when min(projects.closedon) is not null then min(projects.closedon)
-             when min(projects.status) != 'Active' then
-                case
-                    when max(workitem_stages.closed_timestamp) is not null 
-                        then max(workitem_stages.closed_timestamp)
-                    when min(workitems.created_on) is not null
-                        then min(workitems.created_on)
-                    when min(projects.createdon) is not null
-                        then min(projects.createdon)
-                        else min(projects.last_modified) 
-                end
-		 end) as finalfix_date
-
-	    , (case 
-		     when min(projects.status) = 'Active' then 1 else 0
-		 end) as is_open
-        , (case
-		     when min(projects.status) = 'Active' then 0 else 1 
-		 end) as is_closed
-	    , (case 
-		     when min(projects.status) = 'Cancelled' then 1 
-		 end) as is_cancelled
-    from projects
-        left join workitems
-            on workitems.project_sk = projects.project_sk
-        left join workitem_stages
-            on workitem_stages.work_item_id = workitems.work_item_id
-    group by projects.project_sk
-),
-
 workitem_stats as (
     select
         date_day, projects.customer_id, projects.project_type, projects.source
@@ -131,43 +90,9 @@ project_stats as (
         , count(reference) as total_created
         , sum(case when responseduedate is not null then 1 else 0 end) as total_with_response_sla
         , sum(case when fixduedate is not null then 1 else 0 end) as total_with_final_fix_sla
-
-        -- Compute "Response" SLA by comparing project 'responseduedate' with 'PreWorking' stage
-		, sum((case
-            when projects.responseduedate is null then 0
-            when is_cancelled = 1 then 1 
-            when firstresponse_date is null and {{ dbt_utils.datediff('projects.responseduedate', 'now()', 'hour') }} <= 0 then 1
-            when {{ dbt_utils.datediff('projects.responseduedate', 'firstresponse_date', 'hour') }} <= 0 then 1
-            else 0
-         end)) as response_within_sla
-		, sum((case
-            when projects.responseduedate is null then 0
-            when is_cancelled = 1 then 0
-            when firstresponse_date is null and {{ dbt_utils.datediff('projects.responseduedate', 'now()', 'hour') }} > 0 then 1
-            when {{ dbt_utils.datediff('projects.responseduedate', 'firstresponse_date', 'hour') }} > 0 then 1
-            else 0
-         end)) as response_missed_sla
-        -- Compute "Final Fix" SLA by comparing project 'fixduedate' with project 'finalfix_date'
-		, sum((case
-            when projects.fixduedate is null then 0
-            when is_cancelled = 1 then 1
-            when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} <= 0 then 1
-            when {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} <= 0 then 1
-            else 0
-         end)) as final_fix_within_sla
-		, sum((case
-            when projects.fixduedate is null then 0
-            when is_cancelled = 1 then 0
-            when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} > 0 then 1
-            when {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} > 0 then 1
-            else 0
-         end)) as final_fix_missed_sla
-
     from dates
         left join projects
             on projects.createdon::date = dates.date_day
-        left join project_sla
-            on project_sla.project_sk = projects.project_sk
     group by date_day, customer_id, project_type, source
 ),
 
@@ -210,8 +135,8 @@ daily_stats as (
         , dimensions.project_type
         , dimensions.source
 
-        -- Total projects opened on this report_date
-        , sum(project_stats.total_created) as total_projects
+        -- Total projects created on this report_date
+        , sum(project_stats.total_created) as total_created
         -- Total projects attended on this report date
         , sum(workitems_attended.total_attended) as total_attended
         -- Total projects closed on this report_date
@@ -231,18 +156,6 @@ daily_stats as (
         , sum(projects_aged_active_totals.total_open_last_14days) as total_open_last_14days
         , sum(projects_aged_active_totals.total_open_older_than_7days) as total_open_older_than_7days
         , sum(projects_aged_active_totals.total_open_older_than_14days) as total_open_older_than_14days
-
-        -- response SLA aggregations
-        , sum(response_within_sla) as total_response_within_sla
-        , sum(response_missed_sla) as total_response_missed_sla
-        , round( ((sum(response_within_sla) / NULLIF(sum(total_with_response_sla), 0)) * 100)::numeric, 2) 
-            as response_sla_percent
-
-        -- final fix SLA aggregations
-        , sum(final_fix_within_sla) as total_final_fix_within_sla
-        , sum(final_fix_missed_sla) as total_final_fix_missed_sla
-        , round( ((sum(final_fix_within_sla) / NULLIF(sum(total_with_final_fix_sla), 0)) * 100)::numeric, 2) 
-            as final_fix_sla_percent
 
     from dimensions
         left join project_stats
@@ -286,29 +199,30 @@ final as (
         , daily_stats.project_type
         , daily_stats.source
 
-        , daily_stats.total_projects
+        , daily_stats.total_created as total_projects  -- deprecated, remove from reports
+        , daily_stats.total_created
         , daily_stats.total_attended
         , daily_stats.total_closed
         , daily_stats.total_workitems
         , daily_stats.total_reactivated
         , daily_stats.total_open
-        , daily_stats.total_open as total_rolling_open  -- deprecated, removed from reports
+        , daily_stats.total_open as total_rolling_open  -- deprecated, remove from reports
         , daily_stats.total_open_last_7days
         , daily_stats.total_open_last_14days
         , daily_stats.total_open_older_than_7days
         , daily_stats.total_open_older_than_14days
 
         , daily_stats.total_with_response_sla
-        , daily_stats.total_response_within_sla
-        , daily_stats.total_response_missed_sla
-        , 0 as avg_first_response_hours
-        , daily_stats.response_sla_percent
+        , 0 as total_response_within_sla  -- deprecated, remove from reports
+        , 0 as total_response_missed_sla  -- deprecated, remove from reports
+        , 0 as avg_first_response_hours  -- deprecated, remove from reports
+        , 0 as response_sla_percent  -- deprecated, remove from reports
 
         , daily_stats.total_with_final_fix_sla
-        , daily_stats.total_final_fix_within_sla
-        , daily_stats.total_final_fix_missed_sla
-        , 0 as avg_final_fix_hours
-        , daily_stats.final_fix_sla_percent
+        , 0 as total_final_fix_within_sla  -- deprecated, remove from reports
+        , 0 as total_final_fix_missed_sla  -- deprecated, remove from reports
+        , 0 as avg_final_fix_hours  -- deprecated, remove from reports
+        , 0 as final_fix_sla_percent  -- deprecated, remove from reports
 
         , customers.name as customer_name
         , dates.*
