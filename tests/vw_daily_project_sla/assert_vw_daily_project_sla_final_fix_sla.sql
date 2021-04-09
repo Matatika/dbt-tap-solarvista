@@ -59,7 +59,9 @@ having not(sum(total_final_fix_within_sla) = (
 								then max(fact_workitem_stages2.closed_timestamp)
 							when min(fact_workitem2.created_on) is not null
 								then min(fact_workitem2.created_on)
-								else min(dim_project2.createdon)
+							when min(dim_project2.createdon) is not null
+								then min(dim_project2.createdon)
+								else min(dim_project2.last_modified) 
 						end
 				end) as finalfix_date
 			    , (case 
