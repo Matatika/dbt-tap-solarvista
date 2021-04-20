@@ -21,7 +21,8 @@ having not(sum(total_attended) = (
             using (work_item_id)
 		left join {{ ref('dim_project' ) }} dim_project
 			on dim_project.project_sk = fact_workitem.project_sk
-		where fact_workitem_stages.preworking_timestamp::date = vw_daily_project_sla.report_date
+		where (fact_workitem_stages.preworking_timestamp::date = vw_daily_project_sla.report_date or
+				fact_workitem_stages.quickclose_timestamp::date = vw_daily_project_sla.report_date)
 		and dim_project.customer_id = vw_daily_project_sla.customer_id
 		and dim_project.project_type = vw_daily_project_sla.project_type
 		and dim_project.source = vw_daily_project_sla.source

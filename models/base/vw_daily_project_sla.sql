@@ -73,10 +73,10 @@ workitems_attended as (
         , count(distinct projects.reference) as total_attended
   
     from dates
-        left join workitems
         left join workitem_stages
+            on workitem_stages.preworking_timestamp::date = date_day or workitem_stages.quickclose_timestamp::date = date_day
+        left join workitems
             on workitem_stages.work_item_id = workitems.work_item_id
-            on workitem_stages.preworking_timestamp::date = date_day
         left join projects
             on projects.project_sk = workitems.project_sk
     group by date_day, projects.customer_id, projects.project_type, projects.source

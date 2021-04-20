@@ -50,7 +50,7 @@ project_reactivated as (
 project_sla as (
     select
         projects.project_sk
-        , min(projects.createdon)
+        , min(projects.closedon)
         , count(distinct projects.reference) as total_projects
 
         , min(workitems.customer_sk) as customer_sk
@@ -68,20 +68,8 @@ project_sla as (
                 then min(workitem_stages.preworking_timestamp)
                 else min(projects.closedon)
          end ) as firstresponse_date
-        -- Try to get a finalfix_date and calculate final fix SLAs in the face of bad data
-        , (case
-             when min(projects.closedon) is not null then min(projects.closedon)
-             when min(projects.status) != 'Active' then
-                case
-                    when max(workitem_stages.closed_timestamp) is not null 
-                        then max(workitem_stages.closed_timestamp)
-                    when min(workitems.created_on) is not null
-                        then min(workitems.created_on)
-                    when min(projects.createdon) is not null
-                        then min(projects.createdon)
-                        else min(projects.last_modified) 
-                end
-		 end) as finalfix_date
+        -- finalfix_date used to calculate final fix SLAs, we only report on closedon
+        , min(projects.closedon) as finalfix_date
 
 	    , (case 
 		     when min(projects.status) = 'Active' then 1 else 0
@@ -111,10 +99,10 @@ project_sla as (
 stats as (
     select
         distinct projects.reference as project_id,
-        projects.createdon::date as report_date,
-        EXTRACT(YEAR FROM projects.createdon)::integer as report_year,
-        EXTRACT(MONTH FROM projects.createdon)::integer as report_month,
-        EXTRACT(DAY FROM projects.createdon)::integer as report_day,
+        projects.closedon::date as report_date,
+        EXTRACT(YEAR FROM projects.closedon)::integer as report_year,
+        EXTRACT(MONTH FROM projects.closedon)::integer as report_month,
+        EXTRACT(DAY FROM projects.closedon)::integer as report_day,
 
         projects.project_sk,
         customer_id,
@@ -175,7 +163,7 @@ stats as (
             on project_sla.project_sk = projects.project_sk
         left join project_workitem_count on project_workitem_count.project_id = projects.reference
         left join project_workitem_active on project_workitem_active.project_id = projects.reference
-            
+    where closedon is not null
 ),
 
 final as (

@@ -3,4 +3,7 @@
 select 
     sum(vw_project_sla.total_workitems) - (select count(fact_workitem.work_item_id) from {{ ref('fact_workitem')}} where fact_workitem.project_id notnull) as difference
 from {{ ref('vw_project_sla')}}
-having not sum(vw_project_sla.total_workitems) - (select count(fact_workitem.work_item_id) from {{ ref('fact_workitem')}} where fact_workitem.project_id notnull) = 0
+having not sum(vw_project_sla.total_workitems) - (select count(fact_workitem.work_item_id) from {{ ref('fact_workitem')}}
+                                                    left join {{ ref('dim_project')}} on fact_workitem.project_sk = dim_project.project_sk
+                                                    where fact_workitem.project_id notnull
+                                                    and dim_project.closedon notnull) = 0
