@@ -1,7 +1,5 @@
--- Given a number of projects
--- Given a number of work items
--- When select a customer and a day
--- Expect that current days total attended is eq to total PROJECTS attended from fact_workitem_history
+-- Expect that current days total scheduled is eq to total PROJECTS 
+-- with a work item scheduled on current day
 --
 select
     report_date
