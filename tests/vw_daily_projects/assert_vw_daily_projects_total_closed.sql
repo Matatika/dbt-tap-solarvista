@@ -4,7 +4,7 @@
 select
     report_date,
     sum(total_closed)
-from {{ ref('vw_daily_project_sla' ) }}
+from {{ ref('vw_daily_projects' ) }}
 where report_date = '2020-11-11'::date
 group by 1
 having not(sum(total_closed) != 122)
@@ -13,14 +13,14 @@ union
 select
     report_date,
     sum(total_closed)
-from {{ ref('vw_daily_project_sla' ) }}
-where report_date = (select max(report_date) + 1 from {{ ref('vw_daily_project_sla' ) }})
+from {{ ref('vw_daily_projects' ) }}
+where report_date = (select max(report_date) + 1 from {{ ref('vw_daily_projects' ) }})
 group by 1
 having not(sum(total_closed) = (
         select sum(is_closed) 
         from {{ ref('vw_project_sla' ) }} vps
         where final_fix::date = (
-            select max(report_date) from {{ ref('vw_daily_project_sla' ) }}
+            select max(report_date) from {{ ref('vw_daily_projects' ) }}
         ) 
     )
 )

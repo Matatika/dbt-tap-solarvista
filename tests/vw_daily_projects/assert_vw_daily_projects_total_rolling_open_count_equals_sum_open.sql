@@ -4,7 +4,7 @@
 select
     report_date,
     sum(total_open)
-from {{ ref('vw_daily_project_sla' ) }}
-where report_date in (select max(report_date) from {{ ref('vw_daily_project_sla' ) }})
+from {{ ref('vw_daily_projects' ) }}
+where report_date in (select max(report_date) from {{ ref('vw_daily_projects' ) }})
 group by 1
 having not(sum(total_rolling_open) = (select count(*) from {{ ref('dim_project' ) }} where status = 'Active'))

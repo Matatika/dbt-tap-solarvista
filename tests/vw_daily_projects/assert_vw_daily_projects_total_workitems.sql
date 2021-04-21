@@ -9,7 +9,7 @@ select
     , project_type
     , source
     , sum(total_workitems)
-from {{ ref('vw_daily_project_sla' ) }} vw_daily_project_sla
+from {{ ref('vw_daily_projects' ) }} vw_daily_projects
 where report_date >= current_date - 1  -- works for all dates, but this selection reduces the test execution time
 and report_date <= current_date
 group by report_date, customer_id, project_type, source
@@ -19,9 +19,9 @@ having not(sum(total_workitems) = (
 		from {{ ref('fact_workitem' ) }} fact_workitem
 		left join {{ ref('dim_project' ) }} dim_project
 			on dim_project.project_sk = fact_workitem.project_sk
-		where fact_workitem.created_on::date = vw_daily_project_sla.report_date
-		and dim_project.customer_id = vw_daily_project_sla.customer_id
-		and dim_project.project_type = vw_daily_project_sla.project_type
-		and dim_project.source = vw_daily_project_sla.source
+		where fact_workitem.created_on::date = vw_daily_projects.report_date
+		and dim_project.customer_id = vw_daily_projects.customer_id
+		and dim_project.project_type = vw_daily_projects.project_type
+		and dim_project.source = vw_daily_projects.source
 	)
 )
