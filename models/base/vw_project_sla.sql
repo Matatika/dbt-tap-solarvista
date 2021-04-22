@@ -177,7 +177,7 @@ final as (
         stats.reactivated_timestamp,
         stats.remoteclosed_timestamp,
         stats.cancelled_timestamp, -- deprecated, update reports to remove this
-        stats.preworking_timestamp, -- deprecated, update vw_daily_project_sla to use dim project snapshot and remove this
+        stats.preworking_timestamp, -- deprecated, update vw_daily_projects to use dim project snapshot and remove this
         stats.firstresponse_date,
         stats.firstresponse_date as first_response, -- deprecated, update reports to remove this
         stats.finalfix_date,

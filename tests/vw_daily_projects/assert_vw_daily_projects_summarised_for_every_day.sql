@@ -11,7 +11,7 @@ where dim_date.date_year = '2021'
 and not exists (
 	select
 		*
-	from {{ ref('vw_daily_project_sla' ) }} as vw_daily_project_sla
-	where vw_daily_project_sla.date_day = dim_date.date_day
-	and vw_daily_project_sla.customer_id = dim_customer.reference
+	from {{ ref('vw_daily_projects' ) }} as vw_daily_projects
+	where vw_daily_projects.date_day = dim_date.date_day
+	and vw_daily_projects.customer_id = dim_customer.reference
 )

@@ -65,23 +65,6 @@ workitem_stats as (
     group by date_day, projects.customer_id, projects.project_type, projects.source
 ),
 
-workitems_attended as (
-    select
-        date_day, projects.customer_id, projects.project_type, projects.source
-
-        -- Total projects first attended on this report_date
-        , count(distinct projects.reference) as total_attended
-  
-    from dates
-        left join workitem_stages
-            on workitem_stages.preworking_timestamp::date = date_day or workitem_stages.quickclose_timestamp::date = date_day
-        left join workitems
-            on workitem_stages.work_item_id = workitems.work_item_id
-        left join projects
-            on projects.project_sk = workitems.project_sk
-    group by date_day, projects.customer_id, projects.project_type, projects.source
-),
-
 project_stats as (
     select
         date_day, customer_id, project_type, source
@@ -127,6 +110,35 @@ projects_aged_active_totals as (
     group by date_day, customer_id, project_type, source
 ),
 
+-- projects with a work item scheduled
+projects_scheduled as (
+    select
+        date_day, projects.customer_id, project_type, projects.source
+        , count(distinct workitems.project_sk) as total_scheduled
+    from dates
+        left join workitems
+            on workitems.schedule_start_date = dates.date_day
+        left join projects
+            on projects.project_sk = workitems.project_sk
+    group by date_day, projects.customer_id, project_type, projects.source
+),
+
+-- projects with a work item scheduled that has been attended
+projects_attended as (
+    select
+        date_day, projects.customer_id, project_type, projects.source
+        , count(distinct workitems.project_sk) as total_attended
+    from dates
+        left join workitems
+            on workitems.schedule_start_date = dates.date_day
+        left join workitem_stages
+            on workitem_stages.work_item_id = workitems.work_item_id 
+        left join projects
+            on projects.project_sk = workitems.project_sk
+        where (preworking_timestamp::date = date_day or workitem_stages.quickclose_timestamp::date = date_day)
+    group by date_day, projects.customer_id, project_type, projects.source
+),
+
 -- Daily stats summarised by customer, type, and source
 daily_stats as (
     select
@@ -137,8 +149,6 @@ daily_stats as (
 
         -- Total projects created on this report_date
         , sum(project_stats.total_created) as total_created
-        -- Total projects attended on this report date
-        , sum(workitems_attended.total_attended) as total_attended
         -- Total projects closed on this report_date
         , sum(projects_closed.total_closed) as total_closed
         -- Total projects that are to be included in response sla calculation
@@ -156,6 +166,8 @@ daily_stats as (
         , sum(projects_aged_active_totals.total_open_last_14days) as total_open_last_14days
         , sum(projects_aged_active_totals.total_open_older_than_7days) as total_open_older_than_7days
         , sum(projects_aged_active_totals.total_open_older_than_14days) as total_open_older_than_14days
+        , sum(projects_attended.total_attended) as total_attended
+        , sum(projects_scheduled.total_scheduled) as total_scheduled
 
     from dimensions
         left join project_stats
@@ -168,11 +180,6 @@ daily_stats as (
             and workitem_stats.customer_id = dimensions.customer_id
             and workitem_stats.project_type = dimensions.project_type
             and workitem_stats.source = dimensions.source
-        left join workitems_attended
-            on workitems_attended.date_day = dimensions.date_day
-            and workitems_attended.customer_id = dimensions.customer_id
-            and workitems_attended.project_type = dimensions.project_type
-            and workitems_attended.source = dimensions.source
         left join projects_closed
             on projects_closed.date_day = dimensions.date_day
             and projects_closed.customer_id = dimensions.customer_id
@@ -183,6 +190,16 @@ daily_stats as (
             and projects_aged_active_totals.customer_id = dimensions.customer_id
             and projects_aged_active_totals.project_type = dimensions.project_type
             and projects_aged_active_totals.source = dimensions.source
+        left join projects_scheduled
+            on projects_scheduled.date_day = dimensions.date_day
+            and projects_scheduled.customer_id = dimensions.customer_id
+            and projects_scheduled.project_type = dimensions.project_type
+            and projects_scheduled.source = dimensions.source
+        left join projects_attended
+            on projects_attended.date_day = dimensions.date_day
+            and projects_attended.customer_id = dimensions.customer_id
+            and projects_attended.project_type = dimensions.project_type
+            and projects_attended.source = dimensions.source
     group by dimensions.date_day
         , dimensions.customer_id
         , dimensions.project_type
@@ -201,7 +218,6 @@ final as (
 
         , daily_stats.total_created as total_projects  -- deprecated, remove from reports
         , daily_stats.total_created
-        , daily_stats.total_attended
         , daily_stats.total_closed
         , daily_stats.total_workitems
         , daily_stats.total_reactivated
@@ -211,6 +227,8 @@ final as (
         , daily_stats.total_open_last_14days
         , daily_stats.total_open_older_than_7days
         , daily_stats.total_open_older_than_14days
+        , daily_stats.total_scheduled
+        , daily_stats.total_attended
 
         , daily_stats.total_with_response_sla
         , 0 as total_response_within_sla  -- deprecated, remove from reports
