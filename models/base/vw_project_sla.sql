@@ -145,6 +145,7 @@ stats as (
         {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} as final_fix_hours,
 		(case 
             when projects.fixduedate is null then 0
+            when is_refix = 1 then 0
             when is_cancelled = 1 then 1
             when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} <= 0 then 1
             when {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} <= 0 then 1
@@ -152,6 +153,7 @@ stats as (
          end) as final_fix_within_sla,
 		(case 
             when projects.fixduedate is null then 0
+            when is_refix = 1 then 1
             when is_cancelled = 1 then 0
             when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} > 0 then 1
             when {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} > 0 then 1
@@ -177,7 +179,7 @@ final as (
         stats.reactivated_timestamp,
         stats.remoteclosed_timestamp,
         stats.cancelled_timestamp, -- deprecated, update reports to remove this
-        stats.preworking_timestamp, -- deprecated, update vw_daily_project_sla to use dim project snapshot and remove this
+        stats.preworking_timestamp, -- deprecated, update vw_daily_projects to use dim project snapshot and remove this
         stats.firstresponse_date,
         stats.firstresponse_date as first_response, -- deprecated, update reports to remove this
         stats.finalfix_date,
