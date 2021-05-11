@@ -1,5 +1,10 @@
 -- Assert that all available users in vw_reactive_user_availability_today that have active, scheduled work items 
 -- in fact_workitem, and where the scheduled start_time <= now for today are still available.
+
+-- Edge case causing this test to fail very occasionally
+-- Sometime an engineer's only active jobs are ones that are assigned to them a previous day.
+-- This means they are assigned, and are working, but this test thinks they shouldnt be as it only checks when the 
+-- scheduled_start_date = current_date
 select
     user_id
 from {{ ref('vw_reactive_user_availability_today')}}
