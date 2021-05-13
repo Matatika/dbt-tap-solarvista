@@ -102,6 +102,8 @@ projects_aged_active_totals as (
         , sum(case when createdon > date_day - 14 then 1 else 0 end) as total_open_last_14days
         , sum(case when createdon < date_day - 7 then 1 else 0 end) as total_open_older_than_7days
         , sum(case when createdon < date_day - 14 then 1 else 0 end) as total_open_older_than_14days
+        , sum(case when operationalstatus = 'Not Working' then 1 else 0 end) as total_not_working
+        , sum(case when (createdon < date_day - 1 and operationalstatus = 'Not Working') then 1 else 0 end) as total_not_working_over_24_hrs
     from dates
         left join project_snapshots
             on project_snapshots.dbt_valid_from::date <= date_day 
@@ -168,6 +170,8 @@ daily_stats as (
         , sum(projects_aged_active_totals.total_open_older_than_14days) as total_open_older_than_14days
         , sum(projects_attended.total_attended) as total_attended
         , sum(projects_scheduled.total_scheduled) as total_scheduled
+        , sum(projects_aged_active_totals.total_not_working) as total_not_working
+        , sum(projects_aged_active_totals.total_not_working_over_24_hrs) as total_not_working_over_24_hrs
 
     from dimensions
         left join project_stats
@@ -229,6 +233,8 @@ final as (
         , daily_stats.total_open_older_than_14days
         , daily_stats.total_scheduled
         , daily_stats.total_attended
+        , daily_stats.total_not_working
+        , daily_stats.total_not_working_over_24_hrs
 
         , daily_stats.total_with_response_sla
         , 0 as total_response_within_sla  -- deprecated, remove from reports
