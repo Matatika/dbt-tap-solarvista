@@ -13,7 +13,7 @@ fact_activity as (
         activity.created_by as user_id,
         activity.created_on as createdon,
         activity.data_internal_comments as activity_comments,
-        activity.data_linked_work_order as work_order_reference        
+        activity.data_linked_work_order as linked_work_order_reference        
     from activity
 )
 select * from fact_activity
