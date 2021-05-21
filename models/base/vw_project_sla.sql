@@ -145,7 +145,6 @@ stats as (
         {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} as final_fix_hours,
 		(case 
             when projects.fixduedate is null then 0
-            when is_refix = 1 then 0
             when is_cancelled = 1 then 1
             when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} <= 0 then 1
             when {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} <= 0 then 1
@@ -153,7 +152,6 @@ stats as (
          end) as final_fix_within_sla,
 		(case 
             when projects.fixduedate is null then 0
-            when is_refix = 1 then 1
             when is_cancelled = 1 then 0
             when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} > 0 then 1
             when {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} > 0 then 1

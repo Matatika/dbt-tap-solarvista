@@ -25,7 +25,11 @@ dates_with_prior_year_dates as (
     select
         cast(d.date_day as date) as date_day,
         cast({{ dbt_utils.dateadd('year', -1 , 'd.date_day') }} as date) as prior_year_date_day,
-        cast({{ dbt_utils.dateadd('day', -364 , 'd.date_day') }} as date) as prior_year_over_year_date_day
+        cast({{ dbt_utils.dateadd('day', -364 , 'd.date_day') }} as date) as prior_year_over_year_date_day,
+        cast(d.date_day as date) as mon_sun_date_offset,
+        cast({{ week_trunc('d.date_day') }} as date) as mon_sun_week_start,
+        cast(d.date_day + 1 as date) as sun_sat_date_offset,
+        cast({{ week_trunc('d.date_day', 1) }} as date) as sun_sat_week_start
     from
     	base_dates d
 )
@@ -51,9 +55,21 @@ select
     cast({{ date_part('day', 'd.date_day') }} as {{ dbt_utils.type_int() }}) as day_of_month,
     cast({{ date_part('doy', 'd.date_day') }} as {{ dbt_utils.type_int() }}) as day_of_year,
 
-    -- Week number, and a week key to sort
-    cast((to_char(d.date_day, 'YYYY') || right('0' || to_char(d.date_day, 'WW'), 2)) as {{ dbt_utils.type_int() }}) as week_key,
-    cast(to_char(d.date_day, 'WW') as {{ dbt_utils.type_int() }}) as week_of_year
+    -- Default week (Mon - Sun) number, and a week key to sort
+    mon_sun_week_start,
+    cast((to_char(d.mon_sun_week_start, 'YYYY') 
+            || right('0' || {{ date_part('week', 'd.mon_sun_date_offset') }}, 2)) 
+        as {{ dbt_utils.type_int() }}) as week_key,
+    EXTRACT(YEAR FROM d.mon_sun_week_start)::integer as week_year,
+    cast({{ date_part('week', 'd.mon_sun_date_offset') }} as {{ dbt_utils.type_int() }}) as week_of_year,
+
+    -- Retail week (Sun - Sat) number, and a week key to sort
+    sun_sat_week_start,
+    cast((to_char(d.sun_sat_week_start, 'YYYY') 
+            || right('0' || {{ date_part('week', 'd.sun_sat_date_offset') }}, 2)) 
+        as {{ dbt_utils.type_int() }}) as sun_sat_week_key,
+    EXTRACT(YEAR FROM d.sun_sat_week_start)::integer as sun_sat_week_year,
+    cast({{ date_part('week', 'd.sun_sat_date_offset') }} as {{ dbt_utils.type_int() }}) as sun_sat_week_of_year
 
 from
     dates_with_prior_year_dates d
