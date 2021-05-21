@@ -60,6 +60,7 @@ select
     cast((to_char(d.mon_sun_week_start, 'YYYY') 
             || right('0' || {{ date_part('week', 'd.mon_sun_date_offset') }}, 2)) 
         as {{ dbt_utils.type_int() }}) as week_key,
+    EXTRACT(YEAR FROM d.mon_sun_week_start)::integer as week_year,
     cast({{ date_part('week', 'd.mon_sun_date_offset') }} as {{ dbt_utils.type_int() }}) as week_of_year,
 
     -- Retail week (Sun - Sat) number, and a week key to sort
@@ -67,6 +68,7 @@ select
     cast((to_char(d.sun_sat_week_start, 'YYYY') 
             || right('0' || {{ date_part('week', 'd.sun_sat_date_offset') }}, 2)) 
         as {{ dbt_utils.type_int() }}) as sun_sat_week_key,
+    EXTRACT(YEAR FROM d.sun_sat_week_start)::integer as sun_sat_week_year,
     cast({{ date_part('week', 'd.sun_sat_date_offset') }} as {{ dbt_utils.type_int() }}) as sun_sat_week_of_year
 
 from
