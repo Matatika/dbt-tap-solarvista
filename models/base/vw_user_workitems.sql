@@ -15,28 +15,20 @@ workitems_history as (
 
 workitems_preworking as (
     -- Sql to retrieve the work item attended stage by a specific user
-    select ht.work_item_id, ht.stage_transition_transitioned_by_user_id, ht.stage_transition_received_at
-    FROM (
-        Select ht.work_item_id, ht.stage_transition_transitioned_by_user_id, Min(ht.stage_transition_received_at) AS MinDate
-        from workitems_history ht 
-        where ht.stage_stage_type = 'PreWorking' 
-        GROUP BY ht.work_item_id, ht.stage_transition_transitioned_by_user_id
-    ) AS t2
-    INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id
-        AND ht.stage_transition_received_at= t2.MinDate
+    select
+        work_item_id, stage_transition_transitioned_by_user_id, stage_transition_received_at
+    from workitems_history
+    where stage_transition_to_stage_type = 'PreWorking'
+    and stage_transition_transitioned_by_user_id notnull
 ),
 
 workitems_remoteclosed as (
     -- Sql to retrieve the work item remote closed stage by a specific user
-    select ht.work_item_id, ht.stage_transition_transitioned_by_user_id, ht.stage_transition_received_at
-    FROM (
-        Select ht.work_item_id, ht.stage_transition_transitioned_by_user_id, Min(ht.stage_transition_received_at) AS MinDate
-        from workitems_history ht 
-        where ht.stage_stage_type = 'RemoteClosed' 
-        GROUP BY ht.work_item_id, ht.stage_transition_transitioned_by_user_id
-    ) AS t2
-    INNER JOIN workitems_history ht ON ht.work_item_id = t2.work_item_id
-        AND ht.stage_transition_received_at= t2.MinDate
+    select
+        work_item_id, stage_transition_transitioned_by_user_id, stage_transition_received_at
+    from workitems_history
+    where stage_transition_to_stage_type = 'RemoteClosed'
+    and stage_transition_transitioned_by_user_id notnull
 ),
 
 assigned_users as (
@@ -69,7 +61,7 @@ dates as (
 
 stats as (
     select
-        work_item_id
+        workitem_facts.work_item_id
         ,assigned_user_id
         ,created_on::date as report_date
         ,EXTRACT(YEAR FROM created_on)::integer as report_year
@@ -83,7 +75,9 @@ stats as (
         
         -- users who performed each stage
         ,workitems_preworking.stage_transition_transitioned_by_user_id as preworking_by_user_id
+        ,workitems_preworking.stage_transition_received_at as preworking_timestamp
         ,workitems_remoteclosed.stage_transition_transitioned_by_user_id as remoteclosed_by_user_id
+        ,workitems_remoteclosed.stage_transition_received_at as remoteclosed_timestamp
 
         --
         -- metrics
@@ -91,8 +85,8 @@ stats as (
         ,workitem_facts.workitem_count as workitem_count
         ,workitem_facts.duration_hours as duration_hours
     from workitem_facts
-    left join workitems_preworking using (work_item_id)
-    left join workitems_remoteclosed using (work_item_id)
+    left join workitems_preworking on workitems_preworking.work_item_id = workitem_facts.work_item_id
+    left join workitems_remoteclosed on workitems_remoteclosed.work_item_id = workitem_facts.work_item_id
 ),
 
 final as (
@@ -118,8 +112,10 @@ final as (
         ,assigned_users.display_name as assigned_user_name
         ,attended_users.user_id as attended_user_id
         ,attended_users.display_name as attended_user_name
+        ,preworking_timestamp as attended_timestamp
         ,remoteclosed_users.user_id as remoteclosed_user_id
         ,remoteclosed_users.display_name as remoteclosed_user_name
+        ,remoteclosed_timestamp
 
         --
         -- metrics
