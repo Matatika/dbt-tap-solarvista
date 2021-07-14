@@ -12,9 +12,9 @@ and not exists (select *
                   from {{ ref('fact_workitem')}} fw2
                   where fw2.project_sk = fw.project_sk
                   and fw2.last_modified > fw.last_modified
-                  and fw2.current_stage != 'Closed')
+                  and fw2.current_stage not in ('Closed', 'Cancelled'))
 and current_stage != 'Closed'
 having count(*) != (select
                         count(*)
                     from {{ ref('vw_hb_open_wo' )}} hbv
-                    where recent_workitem_stage != 'Closed')
+                    where recent_workitem_stage not in ('Closed', 'Cancelled'))
