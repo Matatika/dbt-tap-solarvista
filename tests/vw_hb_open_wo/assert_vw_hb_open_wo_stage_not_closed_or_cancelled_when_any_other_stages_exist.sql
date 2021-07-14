@@ -13,7 +13,7 @@ and not exists (select *
                   where fw2.project_sk = fw.project_sk
                   and fw2.last_modified > fw.last_modified
                   and fw2.current_stage not in ('Closed', 'Cancelled'))
-and current_stage != 'Closed'
+and current_stage not in ('Closed', 'Cancelled')
 having count(*) != (select
                         count(*)
                     from {{ ref('vw_hb_open_wo' )}} hbv
