@@ -56,7 +56,7 @@ most_recently_attending_engineer as (
                         and fws.preworking_timestamp notnull)
     and workitem_stages.preworking_timestamp notnull
 ),
-most_recent_not_closed_work_item as (
+most_recent_not_closed_or_cancelled_work_item as (
     select
         project_sk
         , tags
@@ -66,8 +66,8 @@ most_recent_not_closed_work_item as (
                         from {{ ref('fact_workitem')}} fw3
                         where fw3.project_sk = workitems.project_sk
                         and fw3.last_modified > workitems.last_modified
-                        and fw3.current_stage != 'Closed')
-    and workitems.current_stage != 'Closed'
+                        and fw3.current_stage not in ('Closed', 'Cancelled'))
+    and workitems.current_stage not in ('Closed', 'Cancelled')
 ),
 most_recent_work_item as (
     select 
@@ -85,13 +85,13 @@ final as (
         selected_projects.*
         , case when most_recently_attending_engineer.display_name notnull then 'Attended' else 'Not Attended' end "attendance"
         , most_recently_attending_engineer.display_name "most_recent_engineer_attended"
-        , case when most_recent_not_closed_work_item.tags notnull then most_recent_not_closed_work_item.tags
+        , case when most_recent_not_closed_or_cancelled_work_item.tags notnull then most_recent_not_closed_or_cancelled_work_item.tags
         else most_recent_work_item.tags end "recent_workitem_tags"
-        , case when most_recent_not_closed_work_item.current_stage notnull then most_recent_not_closed_work_item.current_stage
+        , case when most_recent_not_closed_or_cancelled_work_item.current_stage notnull then most_recent_not_closed_or_cancelled_work_item.current_stage
         else most_recent_work_item.current_stage end "recent_workitem_stage"
     from selected_projects
     left join most_recently_attending_engineer on most_recently_attending_engineer.project_sk = selected_projects.project_sk
-    left join most_recent_not_closed_work_item on most_recent_not_closed_work_item.project_sk = selected_projects.project_sk
+    left join most_recent_not_closed_or_cancelled_work_item on most_recent_not_closed_or_cancelled_work_item.project_sk = selected_projects.project_sk
     left join most_recent_work_item on most_recent_work_item.project_sk = selected_projects.project_sk
     order by "attendance", selected_projects."workorder_created_time"
 )
