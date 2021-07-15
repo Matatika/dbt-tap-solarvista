@@ -62,6 +62,7 @@ fact_workitem as (
 
         --all other attributes from workitem stage table
         workitems.current_workflow_stage_type as current_stage,
+        workitems.current_workflow_stage_display_name as current_stage_display_name,
         workitems.is_completed,
         workitems.tags,
         workitems.schedule_start_time::date as schedule_start_date,	

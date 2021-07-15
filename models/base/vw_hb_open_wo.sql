@@ -60,7 +60,7 @@ most_recent_not_closed_or_cancelled_work_item as (
     select
         project_sk
         , tags
-        , current_stage
+        , case when current_stage_display_name notnull then current_stage_display_name else current_stage end
     from workitems
     where not exists (select *
                         from {{ ref('fact_workitem')}} fw3
@@ -73,7 +73,7 @@ most_recent_work_item as (
     select 
         project_sk
         , workitems.tags
-        , workitems.current_stage
+        , case when current_stage_display_name notnull then current_stage_display_name else current_stage end
     from workitems
     where not exists (select *
                         from {{ ref('fact_workitem')}} fw4
