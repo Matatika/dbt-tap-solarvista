@@ -5,5 +5,5 @@ select
 from {{ ref('fact_workitem' )}} fact_workitem
 	left join {{ ref('dim_project' )}} as dim_project on dim_project.project_sk = fact_workitem.project_sk
 where project_id is null
-and template_display_name in ('Work Order / Job', 'Work Order / Maintenance')
+and template_display_name in ('Work Order / Job', 'Work Order / Maintenance', 'Work Order / Verisae')
 and assigned_user_id is not null  -- found one dodgy work item that is a work order type, but no project, but no user assigned so don't worry
