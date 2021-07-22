@@ -53,7 +53,7 @@ users_with_work_items_not_non_productive as (
     from fact_workitem
     left join dim_project on dim_project.project_sk = fact_workitem.project_sk
     left join fact_workitem_stages on fact_workitem_stages.work_item_id = fact_workitem.work_item_id
-    where template_display_name in ('Work Order / Job', 'Work Order / PPM')
+    where template_display_name in ('Work Order / Job', 'Work Order / PPM', 'Work Order / Verisae')
     and assigned_user_id notnull
     and fact_workitem.schedule_start_time notnull
 ),
@@ -72,7 +72,7 @@ users_with_non_productive_work_item as (
         , fact_workitem.schedule_start_time + (fact_workitem.schedule_duration_minutes * interval '1' minute) as scheduled_to_time
     from fact_workitem
     left join fact_workitem_stages on fact_workitem_stages.work_item_id = fact_workitem.work_item_id
-    where template_display_name not in ('Work Order / Job', 'Work Order / PPM')
+    where template_display_name not in ('Work Order / Job', 'Work Order / PPM', 'Work Order / Verisae')
     and fact_workitem.assigned_user_id notnull
     and fact_workitem.schedule_start_time notnull
 ),
