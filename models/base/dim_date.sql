@@ -1,8 +1,4 @@
-{{
-    config(
-        materialized = 'table'
-    )
-}}
+{{ config(materialized='table') }}
 
 with date_spine as (
     -- TODO, we arbitrarily start and end, update to be relative to current date:

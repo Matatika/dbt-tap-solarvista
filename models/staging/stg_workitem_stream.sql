@@ -1,7 +1,7 @@
 --
 -- Form a 'clean' workitem_stream
 --
-
+{{ config(materialized='view') }}
 with source as (
     
         select * from "{{var('schema')}}".workitem_stream

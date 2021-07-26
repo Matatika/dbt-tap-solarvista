@@ -1,4 +1,4 @@
-
+{{ config(materialized='table') }}
 with workitems as (
     select * from {{ ref('fact_workitem') }}
 ),

@@ -1,3 +1,4 @@
+{{ config(materialized='view') }}
 with workitems as (
     select * from {{ ref('fact_workitem') }}
 ),
