@@ -12,9 +12,7 @@ equipments as (
 dim_project as (
     select
         projects.*
-        , equipments.category_title
     from projects
-    left join equipments on equipments.asset_number = projects.assetnumber
 )
 
 select * from dim_project
