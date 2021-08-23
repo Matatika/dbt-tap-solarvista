@@ -11,9 +11,7 @@ dim_site as (
         sites.reference, 
         sites.status, 
         sites.latitude,
-        sites.longitude,
-        sites.hb_region,
-        sites.hb_area
+        sites.longitude
     from sites
 )
 select * from dim_site
