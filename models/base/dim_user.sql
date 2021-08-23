@@ -6,32 +6,23 @@ with users as (
 skill_stream as (
     select * from "{{var('schema')}}".skill_stream
 ),
-reactive_engineers as (
-    select
-    id
-    from skill_stream, jsonb_to_recordset(users) as users_skills(id text)
-    where name = 'Reactive'
-),
-maintenance_engineers as (
-    select
-    id
-    from skill_stream, jsonb_to_recordset(users) as users_skills(id text)
-    where name = 'Maintenance'
-),
-users_with_engineer_types as (
-	select 
-	users.display_name as display_name
-	, users.email as email
-    , users.user_id as user_id
-    , users.is_assignable as is_assignable
-	, case when users.user_id in (select * from reactive_engineers) then true else false end as is_reactive
-    , case when users.user_id in (select * from maintenance_engineers) then true else false end as is_maintenance
-	from users
+users_with_skills as (
+    select 
+        value->>'id' "skilled_user_id"
+        , array_to_json(array_agg(ss.reference)) "skills_reference"
+        , array_to_json(array_agg(ss."name")) "skills_name"
+    from skill_stream ss, jsonb_array_elements(ss.users)
+    right join users on users.user_id = value->>'id'
+    where value->>'id' notnull
+    group by value->>'id'
 ),
 dim_user as (
     select
-        {{ dbt_utils.surrogate_key(['user_id']) }} as users_sk,
-        *
-    from users_with_engineer_types
+        {{ dbt_utils.surrogate_key(['user_id']) }} as users_sk
+        , users.*
+        , uws.skills_name
+        , uws.skills_reference
+    from users
+    left join users_with_skills uws on uws.skilled_user_id = users.user_id
 )
 select * from dim_user
