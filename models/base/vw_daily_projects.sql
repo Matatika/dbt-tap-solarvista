@@ -12,16 +12,15 @@ with dates as (
 -- every customer
 -- on every report date
 -- for every project_type
--- for every source
 -- even when there are no projects for some customers
 dimensions as (
 	select
-        distinct c.reference as customer_id, d.date_day, p.project_type, p.source
+        distinct c.reference as customer_id, d.date_day, p.project_type
 	from dates d
 	cross join {{ ref('dim_customer') }} c
 	cross join (
 		select
-			distinct p1.project_type, p1.source
+			distinct p1.project_type
 		from {{ ref('dim_project') }} p1
 	) p
 ),
@@ -48,7 +47,7 @@ workitem_stages as (
 
 workitem_stats as (
     select
-        date_day, projects.customer_id, projects.project_type, projects.source
+        date_day, projects.customer_id, projects.project_type
 
         -- Total work items created on this report_date
         , count(distinct workitems.reference) as total_workitems
@@ -62,12 +61,12 @@ workitem_stats as (
         left join workitem_stages using (work_item_id)
         left join projects
             on projects.project_sk = workitems.project_sk
-    group by date_day, projects.customer_id, projects.project_type, projects.source
+    group by date_day, projects.customer_id, projects.project_type
 ),
 
 project_stats as (
     select
-        date_day, customer_id, project_type, source
+        date_day, customer_id, project_type
 
         -- projects created on a given date
         , count(reference) as total_created
@@ -76,12 +75,12 @@ project_stats as (
     from dates
         left join projects
             on projects.createdon::date = dates.date_day
-    group by date_day, customer_id, project_type, source
+    group by date_day, customer_id, project_type
 ),
 
 projects_closed as (
     select
-        date_day, customer_id, project_type, source
+        date_day, customer_id, project_type
         -- projects closed on a given date
         , count(distinct reference) as total_closed
     from dates
@@ -90,13 +89,13 @@ projects_closed as (
 		    and (project_snapshots.dbt_valid_to::date > date_day or project_snapshots.dbt_valid_to is null)
     where status != 'Active'
     and closedon::date = date_day
-    group by date_day, customer_id, project_type, source
+    group by date_day, customer_id, project_type
 ),
 
 -- active projects on a given date
 projects_aged_active_totals as (
     select
-        date_day, customer_id, project_type, source
+        date_day, customer_id, project_type
         , count(distinct reference) as total_open
         , sum(case when createdon > date_day - 7 then 1 else 0 end) as total_open_last_7days
         , sum(case when createdon > date_day - 14 then 1 else 0 end) as total_open_last_14days
@@ -109,26 +108,26 @@ projects_aged_active_totals as (
             on project_snapshots.dbt_valid_from::date <= date_day 
 		    and (project_snapshots.dbt_valid_to::date > date_day or project_snapshots.dbt_valid_to is null)
     where status = 'Active'
-    group by date_day, customer_id, project_type, source
+    group by date_day, customer_id, project_type
 ),
 
 -- projects with a work item scheduled
 projects_scheduled as (
     select
-        date_day, projects.customer_id, project_type, projects.source
+        date_day, projects.customer_id, project_type
         , count(distinct workitems.project_sk) as total_scheduled
     from dates
         left join workitems
             on workitems.schedule_start_date = dates.date_day
         left join projects
             on projects.project_sk = workitems.project_sk
-    group by date_day, projects.customer_id, project_type, projects.source
+    group by date_day, projects.customer_id, project_type
 ),
 
 -- projects with a work item scheduled that has been attended
 projects_attended as (
     select
-        date_day, projects.customer_id, project_type, projects.source
+        date_day, projects.customer_id, project_type
         , count(distinct workitems.project_sk) as total_attended
     from dates
         left join workitems
@@ -138,16 +137,15 @@ projects_attended as (
         left join projects
             on projects.project_sk = workitems.project_sk
         where (preworking_timestamp::date = date_day or workitem_stages.quickclose_timestamp::date = date_day)
-    group by date_day, projects.customer_id, project_type, projects.source
+    group by date_day, projects.customer_id, project_type
 ),
 
--- Daily stats summarised by customer, type, and source
+-- Daily stats summarised by customer, type
 daily_stats as (
     select
         dimensions.date_day
         , dimensions.customer_id
         , dimensions.project_type
-        , dimensions.source
 
         -- Total projects created on this report_date
         , sum(project_stats.total_created) as total_created
@@ -178,36 +176,29 @@ daily_stats as (
             on project_stats.date_day = dimensions.date_day
             and project_stats.customer_id = dimensions.customer_id
             and project_stats.project_type = dimensions.project_type
-            and project_stats.source = dimensions.source
         left join workitem_stats
             on workitem_stats.date_day = dimensions.date_day
             and workitem_stats.customer_id = dimensions.customer_id
             and workitem_stats.project_type = dimensions.project_type
-            and workitem_stats.source = dimensions.source
         left join projects_closed
             on projects_closed.date_day = dimensions.date_day
             and projects_closed.customer_id = dimensions.customer_id
             and projects_closed.project_type = dimensions.project_type
-            and projects_closed.source = dimensions.source
         left join projects_aged_active_totals
             on projects_aged_active_totals.date_day = dimensions.date_day
             and projects_aged_active_totals.customer_id = dimensions.customer_id
             and projects_aged_active_totals.project_type = dimensions.project_type
-            and projects_aged_active_totals.source = dimensions.source
         left join projects_scheduled
             on projects_scheduled.date_day = dimensions.date_day
             and projects_scheduled.customer_id = dimensions.customer_id
             and projects_scheduled.project_type = dimensions.project_type
-            and projects_scheduled.source = dimensions.source
         left join projects_attended
             on projects_attended.date_day = dimensions.date_day
             and projects_attended.customer_id = dimensions.customer_id
             and projects_attended.project_type = dimensions.project_type
-            and projects_attended.source = dimensions.source
     group by dimensions.date_day
         , dimensions.customer_id
         , dimensions.project_type
-        , dimensions.source
 ),
 
 final as (
@@ -218,7 +209,6 @@ final as (
         , dates.date_day_of_month as report_day
         , daily_stats.customer_id
         , daily_stats.project_type
-        , daily_stats.source
 
         , daily_stats.total_created as total_projects  -- deprecated, remove from reports
         , daily_stats.total_created
