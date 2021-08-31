@@ -8,7 +8,6 @@ from {{ ref('vw_project_sla' )}}
 where appliedresponsesla IS NOT NULL
 and firstresponse_date IS NULL
 and is_closed = 1
-and report_date > '2020-12-01'::date
 and project_status != 'Cancelled'
 UNION
 select
@@ -17,5 +16,4 @@ from {{ ref('vw_project_sla' )}}
 where responsedue_date IS NOT NULL
 and firstresponse_date IS NULL
 and is_closed = 1
-and report_date > '2020-12-01'::date
 and project_status != 'Cancelled'
