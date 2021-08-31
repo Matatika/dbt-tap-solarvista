@@ -233,8 +233,7 @@ final as (
         projects.responseduedate,
         projects.responseduedate as responsedue_date,  -- deprecated, update reports to remove this
         projects.fixduedate,
-        projects.fixduedate as fixdue_date,  -- deprecated, update reports to remove this
-        projects.source
+        projects.fixduedate as fixdue_date  -- deprecated, update reports to remove this
 
     from stats
         left join dates on dates.date_day = stats.report_date
