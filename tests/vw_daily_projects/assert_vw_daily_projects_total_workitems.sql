@@ -1,4 +1,4 @@
--- Given a number of projects, for a customer, of a project_type, for a source
+-- Given a number of projects, for a customer, of a project_type
 -- Given those projects were created on a given date
 -- Given a number of work items for those projects
 -- When select daily project sla for that report date
@@ -7,12 +7,11 @@ select
     report_date
 	, customer_id
     , project_type
-    , source
     , sum(total_workitems)
 from {{ ref('vw_daily_projects' ) }} vw_daily_projects
 where report_date >= current_date - 1  -- works for all dates, but this selection reduces the test execution time
 and report_date <= current_date
-group by report_date, customer_id, project_type, source
+group by report_date, customer_id, project_type
 having not(sum(total_workitems) = (
 		select
 			count(distinct fact_workitem.work_item_id)
@@ -22,6 +21,5 @@ having not(sum(total_workitems) = (
 		where fact_workitem.created_on::date = vw_daily_projects.report_date
 		and dim_project.customer_id = vw_daily_projects.customer_id
 		and dim_project.project_type = vw_daily_projects.project_type
-		and dim_project.source = vw_daily_projects.source
 	)
 )
