@@ -62,10 +62,15 @@ models:
         tests:
           - accepted_values:
               values: ['Active', 'Closed', 'Cancelled', 'Pending Acceptance']
-
   - name: fact_workitem
     columns:
       - name: work_item_id
+        tests:
+          - unique
+          - not_null
+  - name: dim_user
+    columns:
+      - name: user_id
         tests:
           - unique
           - not_null
