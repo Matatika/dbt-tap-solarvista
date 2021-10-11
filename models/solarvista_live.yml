@@ -12,7 +12,6 @@ sources:
             tests:
               - unique
               - not_null
-
       - name: project_stream
         columns:
           - name: reference
@@ -20,15 +19,8 @@ sources:
             tests:
               - unique
               - not_null
-
           - name: customer_id
             description: Foreign key to customers
-
-          - name: status
-            tests:
-              - accepted_values:
-                  values: ['Active', 'Closed', 'Cancelled', 'Discarded', 'Pending Acceptance']
-
       - name: workitem_stream
         columns:
           - name: work_item_id
@@ -36,13 +28,10 @@ sources:
             tests:
               - unique
               - not_null
-
           - name: properties_customer_id
             description: Foreign key to customers
-
           - name: properties_project_id
             description: Foreign key to projects
-
 
 models:
   - name: dim_customer
@@ -51,21 +40,21 @@ models:
         tests:
           - unique
           - not_null
-
   - name: dim_project
     columns:
       - name: project_sk
         tests:
           - unique
           - not_null
-      - name: status
-        tests:
-          - accepted_values:
-              values: ['Active', 'Closed', 'Cancelled', 'Pending Acceptance']
-
   - name: fact_workitem
     columns:
       - name: work_item_id
+        tests:
+          - unique
+          - not_null
+  - name: dim_user
+    columns:
+      - name: user_id
         tests:
           - unique
           - not_null
