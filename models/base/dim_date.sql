@@ -4,8 +4,8 @@ with date_spine as (
     -- generate dates for 3 years relative to current date:
     {{ dbt_utils.date_spine(
         datepart="day",
-        start_date=current_date - (3 * 365),
-        end_date=current_date + (3 * 365)
+        start_date=dbt_utils.dateadd('day', 3 * -365 , dbt_utils.current_timestamp()),
+        end_date=dbt_utils.dateadd('day', 3 * 365 , dbt_utils.current_timestamp())
        )
     }}
 ),
