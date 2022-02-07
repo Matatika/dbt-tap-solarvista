@@ -10,7 +10,7 @@
 }}
 
 with workitems as (
-    select * from "{{var('schema')}}".stg_workitem_stream
+    select * from {{ ref('stg_workitem_stream') }}
 ),
 customers as (
     select * from {{ ref('dim_customer') }}

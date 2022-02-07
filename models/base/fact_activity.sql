@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 with activity as (
-    select * from "{{var('schema')}}".activity_stream
+    select * from {{ source ('solarvista_source', 'activity_stream') }}
 ),
 fact_activity as (
     select

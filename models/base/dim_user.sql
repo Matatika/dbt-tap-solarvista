@@ -1,16 +1,16 @@
 {{ config(materialized='table') }}
 
 with user_snapshot as (
-    select * from "{{var('schema')}}".dim_user_snapshot
+    select * from {{ ref('dim_user_snapshot') }}
 ),
 skill_stream as (
-    select * from "{{var('schema')}}".skill_stream
+    select * from {{ source ('solarvista_source', 'skill_stream') }}
 ),
 active_users as (
     select
         *
     from user_snapshot
-    where dbt_valid_to isnull 
+    where dbt_valid_to is null 
 ),
 deleted_users as (
     select

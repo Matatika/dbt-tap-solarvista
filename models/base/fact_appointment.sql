@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 with appointments as (
-    select * from "{{var('schema')}}".appointment_stream
+    select * from {{ source ('solarvista_source', 'appointment_stream') }}
 ),
 users as (
     select * from {{ ref('dim_user') }}

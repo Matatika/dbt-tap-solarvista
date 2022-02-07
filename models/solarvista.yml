@@ -1,0 +1,37 @@
+version: 2
+
+models:
+  - name: dim_customer
+    description: Customer dimension table
+  - name: dim_date
+    description: Date dimension table
+  - name: dim_equipment
+    description: Equipment dimension table
+  - name: dim_project
+    description: Project dimension table
+  - name: dim_site
+    description: Work site dimension table
+  - name: dim_territory
+    description: Territory dimension table
+  - name: dim_user
+    description: User dimension table
+  - name: dim_activity
+    description: Activity dimension table
+  - name: dim_appointment
+    description: Appointment dimension table
+  - name: dim_workitem_history
+    description: Work item history dimension table
+  - name: dim_workitem_stages
+    description: Work item stages dimension table
+  - name: dim_workitem
+    description: Work item dimension table
+  - name: vw_daily_projects
+    description: View of daily project summaries
+  - name: vw_project_sla
+    description: View of project slas
+  - name: vw_user_workitems
+    description: View of work items for users
+  - name: vw_workitem_stages
+    description: View of work item stages
+  - name: stg_workitem_stream
+    description: Staging work item stable

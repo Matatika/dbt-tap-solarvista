@@ -9,7 +9,7 @@
     )
 }}
 with users as (
-    select * from "{{var('schema')}}".users_stream
+    select * from {{ source ('solarvista_source', 'users_stream') }}
 ),
 dim_user_snapshot as (
     select
