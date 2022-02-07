@@ -11,6 +11,8 @@ models:
     description: Project dimension table
   - name: dim_site
     description: Work site dimension table
+  - name: dim_skill
+    description: User skills dimension table
   - name: dim_territory
     description: Territory dimension table
   - name: dim_user

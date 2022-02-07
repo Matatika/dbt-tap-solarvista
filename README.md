@@ -20,7 +20,7 @@ This package along with the [Analyze Bundle](https://github.com/Matatika/analyze
 | [dim_site](models/base/dim_site.sql)           | Site reference information. |
 | [dim_territory](models/base/dim_territory.sql) | Territory reference information. |
 | [dim_site](models/base/dim_site.sql)           | User reference information. |
-| [dim_territory](models/base/dim_territory.sql) | Territory reference information. |
+| [dim_skill](models/base/dim_skill.sql) | Skill reference information. |
 | [dim_user](models/base/dim_user.sql)           | User reference information with [type-2 Slowly Changing Dimensions](https://en.wikipedia.org/wiki/Slowly_changing_dimension#Type_2:_add_new_row) available in `dim_user_snapshot`. |
 | [fact_activity](models/base/fact_activity.sql)       | Activity facts. |
 | [fact_appointment](models/base/fact_appointment.sql) | Appointment facts. |
