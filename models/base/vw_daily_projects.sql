@@ -53,8 +53,7 @@ workitem_stats as (
         , count(distinct workitems.reference) as total_workitems
 
         -- Total projects recalled on this report_date
-        , sum(case when workitems.tags ? 'Reactivation' then 1 else 0 end) as total_reactivated
-
+        , sum(case when {{ query_array('workitems', 'tags', 'Reactivation') }} then 1 else 0 end) as total_reactivated
     from dates
         left join workitems
             on workitems.created_on::date = date_day
