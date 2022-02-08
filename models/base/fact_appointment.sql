@@ -15,10 +15,10 @@ fact_appointment as (
         -- facts and metrics
         , appointments.*
 	    -- dimensions
-        , appointments.start as report_date
-        , EXTRACT(year from report_date) as report_year
-        , EXTRACT(month from report_date) as report_month
-        , EXTRACT(day from report_date) as report_day
+        , appointments."start" as report_date
+        , EXTRACT(year from appointments."start") as report_year
+        , EXTRACT(month from appointments."start") as report_month
+        , EXTRACT(day from appointments."start") as report_day
         , users.display_name as user_name
     from appointments
 	left join users on users.user_id = appointments.user_id
