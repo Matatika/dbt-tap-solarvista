@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 with equipment as (
-    select * from "{{var('schema')}}".equipment_stream
+    select * from {{ source ('solarvista_source', 'equipment_stream') }}
 ),
 dim_equipment as (
     select

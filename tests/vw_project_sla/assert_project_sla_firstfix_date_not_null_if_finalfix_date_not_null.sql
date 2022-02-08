@@ -3,5 +3,5 @@
 select
     *
 from {{ ref('vw_project_sla' )}}
-where finalfix_date notnull
-and firstfix_date isnull
+where finalfix_date is not null
+and firstfix_date is null

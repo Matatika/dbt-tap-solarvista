@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 with customers as (
-    select * from "{{var('schema')}}".customer_stream
+    select * from {{ source ('solarvista_source', 'customer_stream') }}
 ),
 dim_customer as (
     select

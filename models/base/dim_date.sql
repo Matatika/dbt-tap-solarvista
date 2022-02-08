@@ -1,11 +1,11 @@
 {{ config(materialized='table') }}
 
 with date_spine as (
-    -- TODO, we arbitrarily start and end, update to be relative to current date:
+    -- generate dates for 3 years relative to current date:
     {{ dbt_utils.date_spine(
         datepart="day",
-        start_date="to_date('01/01/2016', 'mm/dd/yyyy')",
-        end_date="to_date('01/01/2022', 'mm/dd/yyyy')"
+        start_date=dbt_utils.dateadd('day', 3 * -365 , dbt_utils.current_timestamp()),
+        end_date=dbt_utils.dateadd('day', 3 * 365 , dbt_utils.current_timestamp())
        )
     }}
 ),

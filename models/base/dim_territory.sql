@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 with territories as (
-    select * from "{{var('schema')}}".territory_stream
+    select * from {{ source ('solarvista_source', 'territory_stream') }}
 ),
 dim_territory as (
     select

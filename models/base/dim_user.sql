@@ -1,16 +1,16 @@
 {{ config(materialized='table') }}
 
 with user_snapshot as (
-    select * from "{{var('schema')}}".dim_user_snapshot
+    select * from {{ ref('dim_user_snapshot') }}
 ),
-skill_stream as (
-    select * from "{{var('schema')}}".skill_stream
+skill_table as (
+    select * from {{ ref('dim_skill') }}
 ),
 active_users as (
     select
         *
     from user_snapshot
-    where dbt_valid_to isnull 
+    where dbt_valid_to is null 
 ),
 deleted_users as (
     select
@@ -24,7 +24,7 @@ deleted_users as (
     select
         user_id 
     from active_users )
-    and dbt_valid_to notnull
+    and dbt_valid_to is not null
 ),
 overall_users as (
     select
@@ -36,14 +36,7 @@ overall_users as (
     from deleted_users
 ),
 users_with_skills as (
-    select 
-        value->>'id' "skilled_user_id"
-        , array_to_json(array_agg(ss.reference)) "skills_reference"
-        , array_to_json(array_agg(ss."name")) "skills_name"
-    from skill_stream ss, jsonb_array_elements(ss.users)
-    right join overall_users on overall_users.user_id = value->>'id'
-    where value->>'id' notnull
-    group by value->>'id'
+    {{ skill_user_array_pivot() }}
 ),
 dim_user as (
     select
@@ -52,10 +45,10 @@ dim_user as (
         , overall_users.display_name as display_name
         , overall_users.email as email
         , overall_users.is_assignable as is_assignable
-        , case WHEN overall_users.dbt_valid_to notnull then True else False end as is_deleted
+        , case WHEN overall_users.dbt_valid_to is not null then True else False end as is_deleted
         , uws.skills_name
         , uws.skills_reference
     from overall_users
-    left join users_with_skills uws on uws.skilled_user_id = overall_users.user_id
+    left join users_with_skills uws on uws.id = overall_users.user_id
 )
 select * from dim_user

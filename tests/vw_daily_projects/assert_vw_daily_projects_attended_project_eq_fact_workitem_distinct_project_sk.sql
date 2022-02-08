@@ -17,7 +17,7 @@ having not(sum(total_attended) = (
 			on dim_project.project_sk = fact_workitem.project_sk
 		where (fact_workitem_stages.preworking_timestamp::date = vw_daily_projects.report_date or
 				fact_workitem_stages.quickclose_timestamp::date = vw_daily_projects.report_date)
-		and fact_workitem.project_sk notnull
+		and fact_workitem.project_sk is not null
 		and fact_workitem.schedule_start_date = vw_daily_projects.report_date
 	)
 )

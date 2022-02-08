@@ -26,7 +26,7 @@ project_snapshot as (
 project_workitem_count as (
     select distinct
         projects.reference as project_id,
-        workitems.count as total_workitems
+        sum(workitems.workitem_count) as total_workitems
     from workitems
     left join projects 
         on projects.project_sk = workitems.project_sk   
@@ -35,7 +35,7 @@ project_workitem_count as (
 project_workitem_active as (
     select distinct
         projects.reference as project_id,
-        workitems.count as active_workitems
+        sum(workitems.workitem_count) as active_workitems
     from workitems, projects 
     where projects.project_sk = workitems.project_sk 
     and workitems.current_stage Not in ('Discarded','Closed','RemoteClosed','Rejected','Cancelled')
@@ -47,7 +47,7 @@ project_reactivated as (
         min(workitems.created_on) AS ValueDate
     from workitems, projects 
     where projects.project_sk = workitems.project_sk 
-    and workitems.tags ? 'Reactivation'
+    and {{ query_array('workitems', 'tags', 'Reactivation') }}
     group by projects.reference
 ),
 project_firstfix_date as (
@@ -143,14 +143,14 @@ stats as (
 		(case 
             when projects.responseduedate is null then 0
             when is_cancelled = 1 then 1 
-            when firstresponse_date is null and {{ dbt_utils.datediff('projects.responseduedate', 'now()', 'hour') }} <= 0 then 1
+            when firstresponse_date is null and {{ dbt_utils.datediff('projects.responseduedate', 'current_timestamp', 'hour') }} <= 0 then 1
             when {{ dbt_utils.datediff('projects.responseduedate', 'firstresponse_date', 'hour') }} <= 0 then 1
             else 0
          end) as response_within_sla,
 		(case 
             when projects.responseduedate is null then 0
             when is_cancelled = 1 then 0
-            when firstresponse_date is null and {{ dbt_utils.datediff('projects.responseduedate', 'now()', 'hour') }} > 0 then 1
+            when firstresponse_date is null and {{ dbt_utils.datediff('projects.responseduedate', 'current_timestamp', 'hour') }} > 0 then 1
             when {{ dbt_utils.datediff('projects.responseduedate', 'firstresponse_date', 'hour') }} > 0 then 1
             else 0
          end) as response_missed_sla,
@@ -159,14 +159,14 @@ stats as (
 		(case 
             when projects.fixduedate is null then 0
             when is_cancelled = 1 then 1
-            when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} <= 0 then 1
+            when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'current_timestamp', 'hour') }} <= 0 then 1
             when {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} <= 0 then 1
             else 0
          end) as final_fix_within_sla,
 		(case 
             when projects.fixduedate is null then 0
             when is_cancelled = 1 then 0
-            when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'now()', 'hour') }} > 0 then 1
+            when finalfix_date is null and {{ dbt_utils.datediff('projects.fixduedate', 'current_timestamp', 'hour') }} > 0 then 1
             when {{ dbt_utils.datediff('projects.fixduedate', 'finalfix_date', 'hour') }} > 0 then 1
             else 0
          end) as final_fix_missed_sla

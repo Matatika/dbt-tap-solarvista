@@ -10,7 +10,7 @@
 }}
 
 with projects as (
-    select * from "{{var('schema')}}".project_stream
+    select * from {{ source ('solarvista_source', 'project_stream') }}
 ),
 dim_project_snapshot as (
     select

@@ -3,7 +3,7 @@
 --
 {{ config(materialized='table') }}
 with workitemhistory as (
-    select * from "{{var('schema')}}".workitemhistory_stream
+    select * from {{ source ('solarvista_source', 'workitemhistory_stream') }}
 ),
 to_users as (
     select * from {{ ref('dim_user') }}
