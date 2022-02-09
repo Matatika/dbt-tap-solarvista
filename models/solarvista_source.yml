@@ -1,0 +1,29 @@
+version: 2
+
+sources:
+  - name: solarvista_source
+    schema: "{{ env_var('DBT_SOURCE_SCHEMA') }}"
+    description: Data sync'd from Solarvista Live, and transformed into our service management models.
+    tables:
+      - name: customer_stream
+        description: Solarvista stream table of customers
+      - name: project_stream
+        description: Solarvista stream table work orders
+      - name: workitem_stream
+        description: Solarvista stream table work items
+      - name: equipment_stream
+        description: Solarvista stream table of equipment
+      - name: site_stream
+        description: Solarvista stream table of work sites
+      - name: territory_stream
+        description: Solarvista stream table of territories
+      - name: skill_stream
+        description: Solarvista stream table user skills
+      - name: activity_stream
+        description: Solarvista stream table of activities
+      - name: appointment_stream
+        description: Solarvista stream table of appointments
+      - name: workitemhistory_stream
+        description: Solarvista stream table of work item history
+      - name: users_stream
+        description: Solarvista stream table of users

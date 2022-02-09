@@ -19,7 +19,7 @@ workitems_preworking as (
         work_item_id, stage_transition_transitioned_by_user_id, stage_transition_received_at
     from workitems_history
     where stage_transition_to_stage_type = 'PreWorking'
-    and stage_transition_transitioned_by_user_id notnull
+    and stage_transition_transitioned_by_user_id is not null
 ),
 
 workitems_remoteclosed as (
@@ -28,7 +28,7 @@ workitems_remoteclosed as (
         work_item_id, stage_transition_transitioned_by_user_id, stage_transition_received_at
     from workitems_history
     where stage_transition_to_stage_type = 'RemoteClosed'
-    and stage_transition_transitioned_by_user_id notnull
+    and stage_transition_transitioned_by_user_id is not null
 ),
 
 assigned_users as (

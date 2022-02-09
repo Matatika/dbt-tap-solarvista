@@ -1,7 +1,7 @@
 {{ config(materialized='table') }}
 
 with sites as (
-    select * from "{{var('schema')}}".site_stream
+    select * from {{ source ('solarvista_source', 'site_stream') }}
 ),
 dim_site as (
     select

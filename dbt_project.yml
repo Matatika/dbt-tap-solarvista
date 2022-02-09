@@ -1,16 +1,16 @@
-name: 'tap_solarvista'
-version: '0.1.0'
+name: "tap_solarvista"
+version: "0.2.0"
 require-dbt-version: [">=0.20.0", "<=1.0.0"]
 config-version: 2
 
 profile: local
 
-source-paths: ["models"]   # paths with source code to compile
+source-paths: ["models"] # paths with source code to compile
 analysis-paths: ["analysis"] # path with analysis files which are compiled, but not run
-target-path: "target"      # path for compiled code
-clean-targets: ["target"]  # directories removed by the clean task
-test-paths: ["tests"]       # where to store test results
-data-paths: ["data"]       # load CSVs from this directory with `dbt seed`
+target-path: "target" # path for compiled code
+clean-targets: ["target"] # directories removed by the clean task
+test-paths: ["tests"] # where to store test results
+data-paths: ["data"] # load CSVs from this directory with `dbt seed`
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
@@ -18,6 +18,6 @@ models:
   tap_solarvista:
     base:
       materialized: table
-      
+
 vars:
-  schema: "{{ env_var('TARGET_POSTGRES_SCHEMA') }}"              # the schema where the raw Solarvista tables are located
+  schema: "{{ env_var('DBT_TARGET_SCHEMA') }}"
