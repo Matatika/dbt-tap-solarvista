@@ -5,6 +5,7 @@
       unique_key='user_id',
       strategy='check',
       invalidate_hard_deletes=True,
+      check_cols='all',
     )
 }}
 with users as (
