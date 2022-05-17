@@ -4,7 +4,6 @@
       target_schema=var('schema'),
       unique_key='user_id',
       strategy='check',
-      check_cols=['user_id'],
       invalidate_hard_deletes=True,
     )
 }}
