@@ -1,5 +1,5 @@
 [![Apache License](https://img.shields.io/badge/License-AGPLv3-blue.svg)](https://github.com/Matatika/dbt-tap-solarvista/blob/master/LICENSE) ![dbt logo and 
-version](https://img.shields.io/static/v1?logo=dbt&label=dbt-version&message=[%3E=0.20.0;%3C2.0.0]&color=orange)
+version](https://img.shields.io/static/v1?logo=dbt&label=dbt-version&message=[%3E=1.0.0;%3C2.0.0]&color=orange)
 # Solarvista
 
 This package models Solarvista Live data from [Matatika's Tap](https://github.com/Matatika/tap-solarvista).

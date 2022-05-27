@@ -1,6 +1,6 @@
 name: "tap_solarvista"
 version: "0.3.0"
-require-dbt-version: [">=0.20.0", "<2.0.0"]
+require-dbt-version: [">=1.0.0", "<2.0.0"]
 config-version: 2
 
 profile: local
