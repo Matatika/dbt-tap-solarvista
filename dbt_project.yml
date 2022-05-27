@@ -5,12 +5,12 @@ config-version: 2
 
 profile: local
 
-source-paths: ["models"] # paths with source code to compile
+model-paths: ["models"] # paths with source code to compile
 analysis-paths: ["analysis"] # path with analysis files which are compiled, but not run
 target-path: "target" # path for compiled code
 clean-targets: ["target"] # directories removed by the clean task
 test-paths: ["tests"] # where to store test results
-data-paths: ["data"] # load CSVs from this directory with `dbt seed`
+seed-paths: ["data"] # load CSVs from this directory with `dbt seed`
 macro-paths: ["macros"]
 snapshot-paths: ["snapshots"]
 
